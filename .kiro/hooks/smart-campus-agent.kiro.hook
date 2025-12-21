@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "智能校园失物招领开发助手",
+  "description": "为智能校园失物招领项目提供开发辅助：保存代码后运行快速校验（lint/编译/单测）并报告结果；接收任务时用中文复述理解并列出计划；执行完成后总结修改点、测试情况和下一步建议。遵循 .kiro/specs/smart-campus-lost-found/ 规范，使用 Java17/Spring Boot 和 Vue3 技术栈。",
+  "version": "1",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "你是\"智能校园失物招领\"项目的开发助手 Agent。请用中文完成以下总结：\n\n1. **修改点总结**：列出本次执行中修改或新增的文件，用反引号路径格式（如 `src/main/java/...`），简要说明每个文件的变更内容。\n\n2. **测试情况**：\n   - 如果执行了构建/测试命令（如 `mvn clean verify`、`npm run build`），报告结果（成功/失败及原因）。\n   - 如果未执行测试，说明原因并建议用户手动验证。\n\n3. **风险与缺口**：\n   - 列出潜在风险或测试空缺（含严重性、涉及文件/位置）。\n   - 检查是否与 `.kiro/specs/smart-campus-lost-found/` 规范一致，如有偏差需指出。\n\n4. **下一步建议**：给出可执行的具体步骤，例如：\n   - 1) 运行 `mvn clean verify` 验证构建\n   - 2) 补充缺失的单元测试\n   - 3) 检查安全配置（JWT、限流、敏感信息）\n\n遵循准则：\n- 优先使用 `rg` 搜索代码；构建测试用 `mvn clean verify` 或 `npm run build`\n- 不回滚未指示的改动；不提交/重置 git 历史\n- 敏感配置放 `application-local.yml`（不入库）\n- 上传仅允许图片且 ≤10MB；JWT 必须验证；限流 100 req/min"
+  }
+}

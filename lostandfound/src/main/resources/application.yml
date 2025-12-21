@@ -1,0 +1,99 @@
+spring:
+  application:
+    name: lostandfound
+  
+  # 数据源配置
+  datasource:
+    url: jdbc:mysql://localhost:3306/campuslostandfound?useUnicode=true&characterEncoding=utf8mb4&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true&cachePrepStmts=true&useServerPrepStmts=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:password}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # HikariCP连接池配置（Spring Boot默认）
+    hikari:
+      minimum-idle: 5                      # 最小空闲连接数
+      maximum-pool-size: 20                # 最大连接池大小
+      auto-commit: true                    # 自动提交
+      idle-timeout: 600000                 # 空闲连接超时时间（10分钟）
+      pool-name: CampusLostFoundHikariCP   # 连接池名称
+      max-lifetime: 1800000                # 连接最大存活时间（30分钟）
+      connection-timeout: 30000            # 连接超时时间（30秒）
+      connection-test-query: SELECT 1      # 测试查询
+    
+  # Redis配置
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+  
+  # 文件上传配置
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
+      enabled: true
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+# 服务器配置
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+# MyBatis-Plus配置
+mybatis-plus:
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: com.campus.lostandfound.model.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# JWT配置
+jwt:
+  secret: ${JWT_SECRET:your-secret-key-change-this-in-production-at-least-256-bits-long}
+  access-token-expiration: 7200000  # 2小时（毫秒）
+  refresh-token-expiration: 604800000  # 7天（毫秒）
+
+# 阿里云OSS配置
+aliyun:
+  oss:
+    endpoint: ${OSS_ENDPOINT:}
+    access-key-id: ${OSS_ACCESS_KEY_ID:}
+    access-key-secret: ${OSS_ACCESS_KEY_SECRET:}
+    bucket-name: ${OSS_BUCKET_NAME:}
+
+# 百度AI配置
+baidu:
+  ai:
+    app-id: ${BAIDU_AI_APP_ID:}
+    api-key: ${BAIDU_AI_API_KEY:}
+    secret-key: ${BAIDU_AI_SECRET_KEY:}
+
+# 高德地图配置
+amap:
+  key: ${AMAP_KEY:}
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.campus.lostandfound: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
