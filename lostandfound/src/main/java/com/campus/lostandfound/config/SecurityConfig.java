@@ -70,6 +70,9 @@ public class SecurityConfig {
                 .requestMatchers("/swagger-resources/**").permitAll()
                 .requestMatchers("/webjars/**").permitAll()
                 
+                // 文件上传接口需要认证
+                .requestMatchers("/api/v1/files/**").authenticated()
+                
                 // 其他所有请求需要认证
                 .anyRequest().authenticated()
             )

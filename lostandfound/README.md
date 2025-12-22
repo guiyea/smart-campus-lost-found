@@ -10,13 +10,21 @@
 - MyBatis-Plus基础代码生成（Entity + Mapper）
 - 分页插件配置
 - 自动填充时间字段配置
+- 统一响应与异常处理
+- **用户认证模块（JWT + Spring Security）** ⭐ 新完成
+  - 用户注册功能（学号/手机号唯一性验证）
+  - 用户登录功能（密码验证、令牌生成）
+  - JWT令牌认证（访问令牌 + 刷新令牌）
+  - 登录失败5次锁定机制（15分钟）
+  - 每日首次登录积分奖励（+2积分）
+  - 用户信息管理（查询、更新）
+  - 全局异常处理器
+  - **测试覆盖**: 42个单元测试全部通过 ✅
 
 🚧 **进行中**
-- 统一响应与异常处理
-- 用户认证模块（JWT + Spring Security）
+- 文件上传模块（阿里云OSS集成）
 
 📋 **待开发**
-- 文件上传模块
 - 物品信息模块
 - AI图像识别模块
 - LBS地理服务模块
@@ -45,10 +53,18 @@ lostandfound/
 │   ├── main/
 │   │   ├── java/com/campus/lostandfound/
 │   │   │   ├── config/              # ✅ 配置类
-│   │   │   │   └── MyBatisPlusConfig.java  # MyBatis-Plus配置
-│   │   │   ├── controller/          # 控制器层（REST API接口）
-│   │   │   ├── service/             # 服务层接口
-│   │   │   │   └── impl/            # 服务层实现
+│   │   │   │   ├── MyBatisPlusConfig.java    # MyBatis-Plus配置
+│   │   │   │   ├── SecurityConfig.java       # ✅ Spring Security配置
+│   │   │   │   └── JwtAuthenticationFilter.java # ✅ JWT认证过滤器
+│   │   │   ├── controller/          # ✅ 控制器层（REST API接口）
+│   │   │   │   ├── AuthController.java       # ✅ 认证接口（注册/登录）
+│   │   │   │   └── UserController.java       # ✅ 用户信息接口
+│   │   │   ├── service/             # ✅ 服务层接口
+│   │   │   │   ├── AuthService.java          # ✅ 认证服务接口
+│   │   │   │   ├── UserService.java          # ✅ 用户服务接口
+│   │   │   │   └── impl/            # ✅ 服务层实现
+│   │   │   │       ├── AuthServiceImpl.java  # ✅ 认证服务实现
+│   │   │   │       └── UserServiceImpl.java  # ✅ 用户服务实现
 │   │   │   ├── repository/          # ✅ 数据访问层（MyBatis Mapper）
 │   │   │   │   ├── UserMapper.java
 │   │   │   │   ├── ItemMapper.java
@@ -66,11 +82,28 @@ lostandfound/
 │   │   │   │   │   ├── MatchRecord.java
 │   │   │   │   │   ├── Message.java
 │   │   │   │   │   └── PointRecord.java
-│   │   │   │   ├── dto/             # 数据传输对象（请求参数）
-│   │   │   │   └── vo/              # 视图对象（响应数据）
-│   │   │   ├── common/              # 公共组件（统一响应、常量等）
-│   │   │   ├── exception/           # 异常处理
-│   │   │   ├── util/                # 工具类（JWT, Redis等）
+│   │   │   │   ├── dto/             # ✅ 数据传输对象（请求参数）
+│   │   │   │   │   ├── RegisterDTO.java      # ✅ 注册请求
+│   │   │   │   │   ├── LoginDTO.java         # ✅ 登录请求
+│   │   │   │   │   └── UpdateProfileDTO.java # ✅ 更新用户信息请求
+│   │   │   │   └── vo/              # ✅ 视图对象（响应数据）
+│   │   │   │       ├── UserVO.java            # ✅ 用户信息响应
+│   │   │   │       └── TokenVO.java           # ✅ 令牌响应
+│   │   │   ├── common/              # ✅ 公共组件
+│   │   │   │   ├── Result.java               # ✅ 统一响应格式
+│   │   │   │   ├── PageResult.java           # ✅ 分页响应
+│   │   │   │   └── ResultCode.java           # ✅ 响应状态码枚举
+│   │   │   ├── exception/           # ✅ 异常处理
+│   │   │   │   ├── GlobalExceptionHandler.java # ✅ 全局异常处理器
+│   │   │   │   ├── BusinessException.java      # ✅ 业务异常
+│   │   │   │   ├── UnauthorizedException.java  # ✅ 未认证异常
+│   │   │   │   ├── ForbiddenException.java     # ✅ 无权限异常
+│   │   │   │   ├── NotFoundException.java      # ✅ 资源不存在异常
+│   │   │   │   ├── ValidationException.java    # ✅ 参数验证异常
+│   │   │   │   └── RateLimitException.java     # ✅ 请求频率超限异常
+│   │   │   ├── util/                # ✅ 工具类
+│   │   │   │   ├── JwtUtil.java              # ✅ JWT工具类
+│   │   │   │   └── RedisUtil.java            # ✅ Redis工具类
 │   │   │   └── websocket/           # WebSocket处理器
 │   │   └── resources/
 │   │       ├── db/                  # 数据库相关文档
@@ -82,9 +115,19 @@ lostandfound/
 │   │       ├── application-local.yml # ✅ 本地开发配置（不提交到VCS）
 │   │       ├── schema.sql           # ✅ 数据库建表脚本
 │   │       └── data-test.sql        # ✅ 测试数据脚本
-│   └── test/                        # 测试代码
+│   └── test/                        # ✅ 测试代码
 │       └── java/com/campus/lostandfound/
-│           └── LostandfoundApplicationTests.java
+│           ├── LostandfoundApplicationTests.java # ✅ 应用启动测试
+│           ├── config/
+│           │   └── JwtAuthenticationFilterTest.java # ✅ JWT过滤器测试
+│           ├── exception/
+│           │   └── GlobalExceptionHandlerTest.java  # ✅ 异常处理器测试
+│           ├── service/
+│           │   └── AuthServiceTest.java             # ✅ 认证服务测试
+│           └── util/
+│               └── JwtUtilTest.java                 # ✅ JWT工具类测试
+├── test-auth-endpoints.md           # ✅ 认证接口手动测试指南
+├── checkpoint-8-verification-report.md # ✅ Checkpoint 8验证报告
 ├── .gitignore                       # Git忽略配置
 ├── mvnw                             # Maven Wrapper脚本（Linux/Mac）
 ├── mvnw.cmd                         # Maven Wrapper脚本（Windows）
@@ -189,6 +232,10 @@ spring:
   redis:
     host: localhost
     port: 6379
+    password: your_redis_password  # 如果Redis设置了密码
+
+jwt:
+  secret: your-256-bit-secret-key-here-at-least-32-characters-long
 ```
 
 ### 2. 初始化数据库
@@ -222,7 +269,21 @@ SHOW TABLES;
 
 详细的数据库设计文档请参考：[docs/database-schema.md](docs/database-schema.md)
 
-### 3. 编译项目
+### 3. 启动Redis服务
+
+确保Redis服务已启动（用于登录失败计数和缓存）：
+
+```bash
+# Windows: 启动Redis服务
+redis-server
+
+# Linux/Mac
+sudo systemctl start redis
+# 或
+redis-server
+```
+
+### 4. 编译项目
 
 ```bash
 # Windows
@@ -235,10 +296,26 @@ SHOW TABLES;
 编译成功后会看到：
 ```
 [INFO] BUILD SUCCESS
-[INFO] Compiling 16 source files
+[INFO] Compiling 41 source files
 ```
 
-### 4. 运行应用
+### 5. 运行测试
+
+```bash
+# Windows
+.\mvnw.cmd clean verify
+
+# Linux/Mac
+./mvnw clean verify
+```
+
+测试结果：
+```
+Tests run: 42, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
+```
+
+### 6. 运行应用
 
 ```bash
 # Windows
@@ -258,14 +335,32 @@ $env:SPRING_PROFILES_ACTIVE="local"; .\mvnw.cmd spring-boot:run
 SPRING_PROFILES_ACTIVE=local ./mvnw spring-boot:run
 ```
 
-### 5. 运行测试
+应用启动成功后，访问：http://localhost:8080
 
+### 7. 测试API接口
+
+参考 [test-auth-endpoints.md](test-auth-endpoints.md) 进行手动测试。
+
+#### 快速测试示例
+
+**注册用户**
 ```bash
-# Windows
-.\mvnw.cmd clean verify
+curl -X POST http://localhost:8080/api/v1/auth/register ^
+  -H "Content-Type: application/json" ^
+  -d "{\"studentId\":\"2021001\",\"name\":\"张三\",\"phone\":\"13800138000\",\"password\":\"123456\"}"
+```
 
-# Linux/Mac
-./mvnw clean verify
+**用户登录**
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login ^
+  -H "Content-Type: application/json" ^
+  -d "{\"studentId\":\"2021001\",\"password\":\"123456\"}"
+```
+
+**获取用户信息**（需要替换YOUR_TOKEN）
+```bash
+curl -X GET http://localhost:8080/api/v1/users/me ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
 ```
 
 ## 配置说明
@@ -295,9 +390,35 @@ SPRING_PROFILES_ACTIVE=local ./mvnw spring-boot:run
 
 ## API文档
 
+### 已实现的API接口
+
+#### 认证接口 (`/api/v1/auth`)
+
+| 方法 | 路径 | 说明 | 状态 |
+|------|------|------|------|
+| POST | `/register` | 用户注册 | ✅ |
+| POST | `/login` | 用户登录 | ✅ |
+| POST | `/refresh` | 刷新令牌 | ✅ |
+
+#### 用户接口 (`/api/v1/users`)
+
+| 方法 | 路径 | 说明 | 认证 | 状态 |
+|------|------|------|------|------|
+| GET | `/me` | 获取当前用户信息 | 需要 | ✅ |
+| PUT | `/me` | 更新当前用户信息 | 需要 | ✅ |
+| GET | `/` | 查询用户列表（管理员） | 需要 | ✅ |
+
+### Swagger文档
+
 启动应用后访问：
-- Swagger UI: http://localhost:8080/swagger-ui.html
-- API Docs: http://localhost:8080/v3/api-docs
+- Swagger UI: http://localhost:8080/swagger-ui.html （待配置）
+- API Docs: http://localhost:8080/v3/api-docs （待配置）
+
+### 手动测试
+
+详细的测试指南请参考：[test-auth-endpoints.md](test-auth-endpoints.md)
+
+## 开发规范
 
 ## 开发规范
 
@@ -306,10 +427,18 @@ SPRING_PROFILES_ACTIVE=local ./mvnw spring-boot:run
 ```
 src/main/java/com/campus/lostandfound/
 ├── config/                          # 配置类
-│   └── MyBatisPlusConfig.java      # ✅ MyBatis-Plus配置（分页、自动填充）
-├── controller/                      # 控制器层（REST API）
-├── service/                         # 服务层接口
-│   └── impl/                        # 服务层实现
+│   ├── MyBatisPlusConfig.java      # ✅ MyBatis-Plus配置（分页、自动填充）
+│   ├── SecurityConfig.java         # ✅ Spring Security配置
+│   └── JwtAuthenticationFilter.java # ✅ JWT认证过滤器
+├── controller/                      # ✅ 控制器层（REST API）
+│   ├── AuthController.java         # ✅ 认证接口
+│   └── UserController.java         # ✅ 用户接口
+├── service/                         # ✅ 服务层接口
+│   ├── AuthService.java            # ✅ 认证服务
+│   ├── UserService.java            # ✅ 用户服务
+│   └── impl/                        # ✅ 服务层实现
+│       ├── AuthServiceImpl.java    # ✅ 认证服务实现
+│       └── UserServiceImpl.java    # ✅ 用户服务实现
 ├── repository/                      # 数据访问层
 │   ├── UserMapper.java             # ✅ 用户Mapper
 │   ├── ItemMapper.java             # ✅ 物品Mapper
@@ -327,11 +456,28 @@ src/main/java/com/campus/lostandfound/
 │   │   ├── MatchRecord.java        # ✅ 匹配记录实体
 │   │   ├── Message.java            # ✅ 消息实体
 │   │   └── PointRecord.java        # ✅ 积分记录实体
-│   ├── dto/                         # 数据传输对象
-│   └── vo/                          # 视图对象
-├── common/                          # 公共组件
-├── exception/                       # 异常处理
-├── util/                            # 工具类
+│   ├── dto/                         # ✅ 数据传输对象
+│   │   ├── RegisterDTO.java        # ✅ 注册请求
+│   │   ├── LoginDTO.java           # ✅ 登录请求
+│   │   └── UpdateProfileDTO.java   # ✅ 更新用户信息
+│   └── vo/                          # ✅ 视图对象
+│       ├── UserVO.java             # ✅ 用户信息响应
+│       └── TokenVO.java            # ✅ 令牌响应
+├── common/                          # ✅ 公共组件
+│   ├── Result.java                 # ✅ 统一响应格式
+│   ├── PageResult.java             # ✅ 分页响应
+│   └── ResultCode.java             # ✅ 响应状态码
+├── exception/                       # ✅ 异常处理
+│   ├── GlobalExceptionHandler.java # ✅ 全局异常处理器
+│   ├── BusinessException.java      # ✅ 业务异常
+│   ├── UnauthorizedException.java  # ✅ 未认证异常
+│   ├── ForbiddenException.java     # ✅ 无权限异常
+│   ├── NotFoundException.java      # ✅ 资源不存在异常
+│   ├── ValidationException.java    # ✅ 参数验证异常
+│   └── RateLimitException.java     # ✅ 请求频率超限异常
+├── util/                            # ✅ 工具类
+│   ├── JwtUtil.java                # ✅ JWT工具类
+│   └── RedisUtil.java              # ✅ Redis工具类
 └── websocket/                       # WebSocket处理器
 ```
 
@@ -362,6 +508,30 @@ src/main/java/com/campus/lostandfound/
 - [数据库设置指南](docs/database-setup-guide.md) - 数据库安装和配置
 - [Windows环境设置](docs/WINDOWS_SETUP.md) - Windows开发环境配置
 - [快速开始数据库](docs/QUICK_START_DATABASE.md) - 数据库快速初始化
+- [认证接口测试指南](test-auth-endpoints.md) - 用户认证模块手动测试
+- [Checkpoint 8验证报告](checkpoint-8-verification-report.md) - 用户认证模块验证结果
+
+## 测试报告
+
+### 最新测试结果（Checkpoint 8）
+
+**日期**: 2025-12-22  
+**状态**: ✅ 通过
+
+```
+Tests run: 42, Failures: 0, Errors: 0, Skipped: 0
+BUILD SUCCESS
+Total time: 31.948 s
+```
+
+**测试覆盖**:
+- ✅ JWT认证过滤器测试 (7个测试)
+- ✅ 全局异常处理器测试 (10个测试)
+- ✅ 应用启动测试 (1个测试)
+- ✅ 认证服务测试 (14个测试)
+- ✅ JWT工具类测试 (10个测试)
+
+详细报告请查看：[checkpoint-8-verification-report.md](checkpoint-8-verification-report.md)
 
 ## 常见问题
 
@@ -388,6 +558,38 @@ src/main/java/com/campus/lostandfound/
 3. 确认数据库 `campuslostandfound` 已创建
 4. 验证用户名和密码正确
 
+### Redis连接失败
+
+**问题**: `Unable to connect to Redis`
+
+**解决**:
+1. 确认Redis服务已启动
+2. 检查 `application-local.yml` 中的Redis配置
+3. 如果Redis设置了密码，确保配置正确
+4. 测试Redis连接：`redis-cli ping`（应返回PONG）
+
+### JWT令牌验证失败
+
+**问题**: `401 Unauthorized` 或 `Invalid JWT token`
+
+**解决**:
+1. 确认请求头包含 `Authorization: Bearer <token>`
+2. 检查令牌是否过期（访问令牌2小时有效）
+3. 使用刷新令牌获取新的访问令牌
+4. 确认JWT密钥配置正确（至少32字符）
+
+### 登录失败账户锁定
+
+**问题**: 测试时账户被锁定
+
+**解决**:
+1. 等待15分钟后自动解锁
+2. 或手动清除Redis中的锁定记录：
+   ```bash
+   redis-cli
+   > DEL login:fail:2021001
+   ```
+
 ### 时区问题
 
 **问题**: 时间字段保存后时区不正确
@@ -398,6 +600,16 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/campuslostandfound?serverTimezone=Asia/Shanghai
 ```
+
+### 测试失败
+
+**问题**: 运行测试时出现失败
+
+**解决**:
+1. 确保数据库和Redis服务正常运行
+2. 检查测试数据是否正确初始化
+3. 查看具体的错误日志
+4. 运行 `.\mvnw.cmd clean test` 清理后重新测试
 
 ## 许可证
 

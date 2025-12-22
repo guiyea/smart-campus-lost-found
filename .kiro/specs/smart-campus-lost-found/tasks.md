@@ -357,7 +357,12 @@
 ## 第三阶段：文件上传模块
 
 - [ ] 9. 阿里云OSS集成
-  - [ ] 9.1 配置阿里云OSS
+  - [x] 9.1 配置阿里云OSS
+
+
+
+
+
     - 添加aliyun-sdk-oss依赖到pom.xml
     - 在application.yml中添加OSS配置（endpoint, accessKeyId, accessKeySecret, bucketName从环境变量读取）
     - 创建`config/OssConfig.java`:
@@ -365,7 +370,12 @@
       - 创建OSSClient Bean
     - _Requirements: 2.1_
 
-  - [ ] 9.2 实现文件服务
+  - [x] 9.2 实现文件服务
+
+
+
+
+
     - 创建`service/FileService.java`接口
     - 创建`service/impl/FileServiceImpl.java`
     - 实现uploadImage(MultipartFile file):
@@ -386,7 +396,11 @@
     - 配置最少100次迭代
     - **Validates: Requirements 3.5**
 
-  - [ ] 9.4 实现文件上传Controller
+  - [x] 9.4 实现文件上传Controller
+
+
+
+
     - 创建`controller/FileController.java`，使用@RequestMapping("/api/v1/files")
     - 实现POST /upload: 上传单个文件
       - 使用@RequestParam("file") MultipartFile接收文件
