@@ -2,6 +2,7 @@ package com.campus.lostandfound.controller;
 
 import com.campus.lostandfound.common.Result;
 import com.campus.lostandfound.model.dto.ItemDTO;
+import com.campus.lostandfound.model.vo.ItemDetailVO;
 import com.campus.lostandfound.model.vo.ItemVO;
 import com.campus.lostandfound.service.ItemService;
 import jakarta.validation.Valid;
@@ -37,5 +38,56 @@ public class ItemController {
         ItemVO itemVO = itemService.publish(dto, userId);
         
         return Result.success(itemVO);
+    }
+    
+    /**
+     * 更新物品信息
+     * 
+     * @param id 物品ID
+     * @param dto 物品信息DTO
+     * @return 更新后的物品信息
+     */
+    @PutMapping("/{id}")
+    public Result<ItemVO> updateItem(@PathVariable Long id, @Valid @RequestBody ItemDTO dto) {
+        // 从SecurityContext获取当前用户ID
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Long userId = (Long) authentication.getPrincipal();
+        
+        // 调用Service更新物品信息
+        ItemVO itemVO = itemService.update(id, dto, userId);
+        
+        return Result.success(itemVO);
+    }
+    
+    /**
+     * 删除物品信息（软删除）
+     * 
+     * @param id 物品ID
+     * @return 操作结果
+     */
+    @DeleteMapping("/{id}")
+    public Result<Void> deleteItem(@PathVariable Long id) {
+        // 从SecurityContext获取当前用户ID
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Long userId = (Long) authentication.getPrincipal();
+        
+        // 调用Service删除物品信息
+        itemService.delete(id, userId);
+        
+        return Result.success(null);
+    }
+    
+    /**
+     * 获取物品详情
+     * 
+     * @param id 物品ID
+     * @return 物品详情信息
+     */
+    @GetMapping("/{id}")
+    public Result<ItemDetailVO> getItemDetail(@PathVariable Long id) {
+        // 调用Service获取物品详情
+        ItemDetailVO itemDetailVO = itemService.getDetail(id);
+        
+        return Result.success(itemDetailVO);
     }
 }

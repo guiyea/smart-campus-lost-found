@@ -511,7 +511,12 @@
       - 返回更新后的ItemVO
     - _Requirements: 2.4_
 
-  - [ ] 11.2 实现物品删除Service（软删除）
+  - [x] 11.2 实现物品删除Service（软删除）
+
+
+
+
+
     - 在ItemServiceImpl中实现delete(Long id, Long userId):
       - 查询物品信息，不存在则抛出NotFoundException
       - 验证userId是否为物品发布者，不是则抛出ForbiddenException
@@ -519,7 +524,12 @@
       - 不物理删除数据，保留原始记录
     - _Requirements: 2.5_
 
-  - [ ] 11.3 实现物品编辑删除Controller
+  - [x] 11.3 实现物品编辑删除Controller
+
+
+
+
+
     - 在ItemController中实现PUT /{id}: 更新物品信息
     - 在ItemController中实现DELETE /{id}: 删除物品信息
     - _Requirements: 2.4, 2.5_
@@ -533,7 +543,12 @@
     - **Validates: Requirements 2.5**
 
 - [ ] 12. 物品详情查看
-  - [ ] 12.1 实现物品详情Service
+  - [x] 12.1 实现物品详情Service
+
+
+
+
+
     - 在ItemServiceImpl中实现getDetail(Long id):
       - 查询物品信息（包含关联的图片和标签），不存在或已删除则抛出NotFoundException
       - 使用Redis原子操作增加浏览次数: INCR item:view:{id}
@@ -543,7 +558,16 @@
       - 组装ItemDetailVO返回
     - _Requirements: 2.6, 5.3_
 
-  - [ ] 12.2 实现物品详情Controller
+  - [x] 12.2 实现物品详情Controller
+
+
+
+
+
+
+
+
+
     - 在ItemController中实现GET /{id}: 获取物品详情
     - 返回Result<ItemDetailVO>
     - _Requirements: 2.6_
@@ -555,7 +579,12 @@
     - 配置最少100次迭代
     - **Validates: Requirements 2.6**
 
-- [ ] 13. Checkpoint - 物品信息模块验证
+- [x] 13. Checkpoint - 物品信息模块验证
+
+
+
+
+
   - 运行`mvn clean verify`确保所有测试通过
   - 测试物品发布、编辑、删除、详情查看接口
   - 验证软删除功能和浏览计数功能
@@ -564,6 +593,9 @@
 ## 第五阶段：AI图像识别模块
 
 - [ ] 14. 百度AI图像识别集成
+
+
+
   - [ ] 14.1 配置百度AI SDK
     - 添加baidu-aip-sdk依赖到pom.xml
     - 在application.yml中添加百度AI配置（appId, apiKey, secretKey从环境变量读取）

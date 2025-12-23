@@ -1,6 +1,7 @@
 package com.campus.lostandfound.service;
 
 import com.campus.lostandfound.model.dto.ItemDTO;
+import com.campus.lostandfound.model.vo.ItemDetailVO;
 import com.campus.lostandfound.model.vo.ItemVO;
 
 /**
@@ -26,4 +27,20 @@ public interface ItemService {
      * @return 更新后的物品信息VO
      */
     ItemVO update(Long id, ItemDTO dto, Long userId);
+    
+    /**
+     * 删除物品信息（软删除）
+     * 
+     * @param id 物品ID
+     * @param userId 当前用户ID
+     */
+    void delete(Long id, Long userId);
+    
+    /**
+     * 获取物品详情
+     * 
+     * @param id 物品ID
+     * @return 物品详情VO
+     */
+    ItemDetailVO getDetail(Long id);
 }

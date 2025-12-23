@@ -3,13 +3,16 @@ package com.campus.lostandfound.service;
 import com.campus.lostandfound.model.dto.ItemDTO;
 import com.campus.lostandfound.model.entity.Item;
 import com.campus.lostandfound.model.entity.ItemImage;
+import com.campus.lostandfound.model.entity.ItemTag;
 import com.campus.lostandfound.model.entity.User;
+import com.campus.lostandfound.model.vo.ItemDetailVO;
 import com.campus.lostandfound.model.vo.ItemVO;
 import com.campus.lostandfound.repository.ItemImageMapper;
 import com.campus.lostandfound.repository.ItemMapper;
 import com.campus.lostandfound.repository.ItemTagMapper;
 import com.campus.lostandfound.repository.UserMapper;
 import com.campus.lostandfound.service.impl.ItemServiceImpl;
+import com.campus.lostandfound.util.RedisUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,6 +56,9 @@ class ItemServiceTest {
     
     @Mock
     private MatchService matchService;
+    
+    @Mock
+    private RedisUtil redisUtil;
     
     @InjectMocks
     private ItemServiceImpl itemService;
@@ -362,5 +368,145 @@ class ItemServiceTest {
         
         // 验证标签没有被删除（因为图片未变更）
         verify(itemTagMapper, never()).delete(any());
+    }
+    
+    @Test
+    void testGetDetail() {
+        // Given
+        Long itemId = 100L;
+        
+        Item item = new Item();
+        item.setId(itemId);
+        item.setUserId(1L);
+        item.setTitle("丢失钱包");
+        item.setDescription("黑色皮质钱包，内有身份证和银行卡");
+        item.setType(0);
+        item.setCategory("钱包");
+        item.setLongitude(new BigDecimal("116.397128"));
+        item.setLatitude(new BigDecimal("39.916527"));
+        item.setLocationDesc("图书馆三楼");
+        item.setEventTime(LocalDateTime.now().minusHours(2));
+        item.setStatus(0);
+        item.setViewCount(5);
+        item.setDeleted(0);
+        item.setCreatedAt(LocalDateTime.now().minusHours(3));
+        item.setUpdatedAt(LocalDateTime.now().minusHours(1));
+        
+        ItemImage image1 = new ItemImage();
+        image1.setItemId(itemId);
+        image1.setUrl("https://example.com/image1.jpg");
+        image1.setSort(0);
+        
+        ItemImage image2 = new ItemImage();
+        image2.setItemId(itemId);
+        image2.setUrl("https://example.com/image2.jpg");
+        image2.setSort(1);
+        
+        ItemTag tag1 = new ItemTag();
+        tag1.setItemId(itemId);
+        tag1.setTag("黑色");
+        
+        ItemTag tag2 = new ItemTag();
+        tag2.setItemId(itemId);
+        tag2.setTag("皮质");
+        
+        List<ItemVO> matchRecommendations = Arrays.asList(
+            createMockItemVO(200L, "找到钱包", 1),
+            createMockItemVO(201L, "拾获钱包", 1)
+        );
+        
+        when(itemMapper.selectById(itemId)).thenReturn(item);
+        when(redisUtil.increment("item:view:" + itemId)).thenReturn(6L);
+        when(userMapper.selectById(1L)).thenReturn(user);
+        when(itemImageMapper.selectList(any())).thenReturn(Arrays.asList(image1, image2));
+        when(itemTagMapper.selectList(any())).thenReturn(Arrays.asList(tag1, tag2));
+        when(matchService.getRecommendations(itemId)).thenReturn(matchRecommendations);
+        
+        // When
+        ItemDetailVO result = itemService.getDetail(itemId);
+        
+        // Then
+        assertNotNull(result);
+        assertEquals(itemId, result.getId());
+        assertEquals("丢失钱包", result.getTitle());
+        assertEquals("黑色皮质钱包，内有身份证和银行卡", result.getDescription());
+        assertEquals(0, result.getType());
+        assertEquals("钱包", result.getCategory());
+        assertEquals("张三", result.getUserName());
+        assertEquals("https://example.com/avatar.jpg", result.getUserAvatar());
+        assertEquals(6, result.getViewCount()); // 浏览次数应该增加1
+        
+        // 验证图片列表
+        assertNotNull(result.getImages());
+        assertEquals(2, result.getImages().size());
+        assertEquals("https://example.com/image1.jpg", result.getImages().get(0));
+        assertEquals("https://example.com/image2.jpg", result.getImages().get(1));
+        
+        // 验证标签列表
+        assertNotNull(result.getTags());
+        assertEquals(2, result.getTags().size());
+        assertTrue(result.getTags().contains("黑色"));
+        assertTrue(result.getTags().contains("皮质"));
+        
+        // 验证匹配推荐列表
+        assertNotNull(result.getMatchRecommendations());
+        assertEquals(2, result.getMatchRecommendations().size());
+        assertEquals("找到钱包", result.getMatchRecommendations().get(0).getTitle());
+        assertEquals("拾获钱包", result.getMatchRecommendations().get(1).getTitle());
+        
+        // 验证Redis浏览次数增加
+        verify(redisUtil).increment("item:view:" + itemId);
+        
+        // 验证数据库浏览次数更新
+        ArgumentCaptor<Item> itemCaptor = ArgumentCaptor.forClass(Item.class);
+        verify(itemMapper).updateById(itemCaptor.capture());
+        Item updatedItem = itemCaptor.getValue();
+        assertEquals(6, updatedItem.getViewCount());
+        
+        // 验证调用了匹配推荐服务
+        verify(matchService).getRecommendations(itemId);
+    }
+    
+    @Test
+    void testGetDetailItemNotFound() {
+        // Given
+        Long itemId = 999L;
+        
+        when(itemMapper.selectById(itemId)).thenReturn(null);
+        
+        // When & Then
+        assertThrows(com.campus.lostandfound.exception.NotFoundException.class, 
+            () -> itemService.getDetail(itemId));
+    }
+    
+    @Test
+    void testGetDetailItemDeleted() {
+        // Given
+        Long itemId = 100L;
+        
+        Item deletedItem = new Item();
+        deletedItem.setId(itemId);
+        deletedItem.setDeleted(1);
+        
+        when(itemMapper.selectById(itemId)).thenReturn(deletedItem);
+        
+        // When & Then
+        assertThrows(com.campus.lostandfound.exception.NotFoundException.class, 
+            () -> itemService.getDetail(itemId));
+    }
+    
+    private ItemVO createMockItemVO(Long id, String title, Integer type) {
+        ItemVO vo = new ItemVO();
+        vo.setId(id);
+        vo.setTitle(title);
+        vo.setType(type);
+        vo.setUserId(2L);
+        vo.setUserName("李四");
+        vo.setDescription("测试描述");
+        vo.setCategory("钱包");
+        vo.setStatus(0);
+        vo.setViewCount(0);
+        vo.setCreatedAt(LocalDateTime.now());
+        return vo;
     }
 }
