@@ -1,14 +1,14 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- Requirements and design specs live in `.kiro/specs/smart-campus-lost-found/`—treat them as the source of truth for scope and domain language.
+- Requirements and design specs live in `.kiro/specs/smart-campus-lost-found/` -- treat them as the source of truth for scope and domain language.
 - Backend (Spring Boot, planned path): `src/main/java/com/campus/lostandfound/` with `config/`, `controller/`, `service/`, `repository/`, `model/{entity,dto,vo}/`, `common/`, `exception/`, `util/`, `websocket/`; configs and static assets in `src/main/resources/`.
 - Backend tests mirror package layout under `src/test/java/com/campus/lostandfound/`.
 - Frontend (Vue 3 + Vite + Element Plus, if/when added): `web/` with `src/components/`, `src/views/`, `src/stores/` (Pinia), assets in `src/assets/`.
 
 ## Build, Test, and Development Commands
-- `mvn clean verify` – compile and run unit/integration tests for the Spring Boot service.
-- `mvn spring-boot:run` – start the API locally using `application.yml` and active profile overrides.
+- `mvn clean verify` - compile and run unit/integration tests for the Spring Boot service.
+- `mvn spring-boot:run` - start the API locally using `application.yml` and active profile overrides.
 - In `web/`: `npm install`, then `npm run dev -- --host` for local dev; `npm run build` for production bundle.
 - Use `SPRING_PROFILES_ACTIVE=local` to load local-only secrets and endpoints; keep cloud keys out of VCS.
 
@@ -28,5 +28,5 @@
 
 ## Security & Configuration Tips
 - Keep Baidu AI, AMap (LBS), and OSS credentials in environment variables or an untracked `application-local.yml`; never commit keys.
-- Enforce JWT on sensitive routes, validate file types/sizes (images only, <=10 MB), and keep soft deletes for item records.
+- Enforce JWT on sensitive routes, validate file types/sizes (images only, <=10 MB), and keep soft deletes for item records.
 - Log errors without leaking tokens or PII; rate-limit per IP as specified (e.g., 100 req/min) and cache hotspots in Redis.

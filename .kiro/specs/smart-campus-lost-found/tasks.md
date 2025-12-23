@@ -592,19 +592,26 @@
 
 ## 第五阶段：AI图像识别模块
 
-- [ ] 14. 百度AI图像识别集成
+- [-] 14. 阿里云视觉智能图像识别集成
 
 
 
-  - [ ] 14.1 配置百度AI SDK
-    - 添加baidu-aip-sdk依赖到pom.xml
-    - 在application.yml中添加百度AI配置（appId, apiKey, secretKey从环境变量读取）
-    - 创建`config/BaiduAiConfig.java`:
+  - [x] 14.1 配置阿里云视觉智能SDK
+
+
+    - 添加aliyun-java-sdk-core和aliyun-java-sdk-imagerecog依赖到pom.xml
+    - 在application.yml中添加阿里云视觉智能配置（accessKeyId, accessKeySecret, regionId从环境变量读取，复用OSS的accessKey）
+    - 创建`config/AliyunVisionConfig.java`:
       - 使用@ConfigurationProperties读取配置
-      - 创建AipImageClassify Bean（通用物体识别客户端）
+      - 创建IAcsClient Bean（阿里云SDK客户端）
     - _Requirements: 3.1_
 
-  - [ ] 14.2 实现图像识别Service
+
+
+  - [x] 14.2 实现图像识别Service
+
+
+
     - 创建`service/ImageRecognitionService.java`接口:
       - RecognitionResult recognize(String imageUrl)
       - List<String> extractTags(String imageUrl)
@@ -612,25 +619,36 @@
     - 创建`model/vo/RecognitionResult.java`: category, confidence, tags(List<TagInfo>), rawResponse
     - 创建`model/vo/TagInfo.java`: tag, confidence
     - 创建`service/impl/ImageRecognitionServiceImpl.java`:
-      - 实现recognize(): 调用百度AI通用物体识别API
+      - 实现recognize(): 调用阿里云视觉智能图像标签API（TaggingImage）
         - 设置超时时间5秒
+        - 可直接使用OSS图片URL，无需额外传输
         - 解析返回结果，提取物品类别和置信度
         - 如果调用失败，记录错误日志，返回空结果（降级处理）
       - 实现extractTags(): 从识别结果提取特征标签（颜色、品牌、型号等）
       - 实现getCategory(): 根据识别结果映射到系统预定义类别
         - 预定义类别: 电子设备、证件卡片、钥匙、钱包、书籍文具、衣物配饰、运动器材、其他
+
+
     - _Requirements: 3.1, 3.2, 3.3, 3.4_
 
-  - [ ] 14.3 集成图像识别到物品发布流程
+  - [x] 14.3 集成图像识别到物品发布流程
+
+
+
     - 修改ItemServiceImpl.publish()方法:
       - 发布成功后，使用@Async异步调用图像识别
       - 对第一张图片调用ImageRecognitionService.recognize()
       - 将识别出的category更新到item表
+
+
       - 将识别出的tags批量插入item_tag表
       - 如果识别失败，保留用户手动选择的category
     - _Requirements: 2.2, 3.1_
 
-  - [ ] 14.4 实现手动类别选择接口
+  - [-] 14.4 实现手动类别选择接口
+
+
+
     - 在ItemController中实现PUT /{id}/category: 手动更新物品类别
     - 用于AI识别失败或识别不准确时的降级方案
     - _Requirements: 3.4_
@@ -638,7 +656,10 @@
 ## 第六阶段：LBS地理服务模块
 
 - [ ] 15. 高德地图API集成
-  - [ ] 15.1 配置高德地图SDK
+  - [x] 15.1 配置高德地图SDK
+
+
+
     - 在application.yml中添加高德地图配置（key从环境变量读取）
     - 创建`config/AmapConfig.java`:
       - 使用@ConfigurationProperties读取配置

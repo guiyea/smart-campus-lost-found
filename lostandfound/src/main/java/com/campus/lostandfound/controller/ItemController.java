@@ -2,6 +2,7 @@ package com.campus.lostandfound.controller;
 
 import com.campus.lostandfound.common.Result;
 import com.campus.lostandfound.model.dto.ItemDTO;
+import com.campus.lostandfound.model.dto.UpdateCategoryDTO;
 import com.campus.lostandfound.model.vo.ItemDetailVO;
 import com.campus.lostandfound.model.vo.ItemVO;
 import com.campus.lostandfound.service.ItemService;
@@ -89,5 +90,25 @@ public class ItemController {
         ItemDetailVO itemDetailVO = itemService.getDetail(id);
         
         return Result.success(itemDetailVO);
+    }
+    
+    /**
+     * 手动更新物品类别
+     * 用于AI识别失败或识别不准确时的降级方案
+     * 
+     * @param id 物品ID
+     * @param dto 类别更新DTO
+     * @return 更新后的物品信息
+     */
+    @PutMapping("/{id}/category")
+    public Result<ItemVO> updateCategory(@PathVariable Long id, @Valid @RequestBody UpdateCategoryDTO dto) {
+        // 从SecurityContext获取当前用户ID
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Long userId = (Long) authentication.getPrincipal();
+        
+        // 调用Service更新物品类别
+        ItemVO itemVO = itemService.updateCategory(id, dto.getCategory(), userId);
+        
+        return Result.success(itemVO);
     }
 }

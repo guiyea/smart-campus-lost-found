@@ -315,4 +315,35 @@ public class ItemServiceImpl implements ItemService {
         
         return vo;
     }
+    
+    /**
+     * 手动更新物品类别
+     * 用于AI识别失败或识别不准确时的降级方案
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ItemVO updateCategory(Long id, String category, Long userId) {
+        log.info("用户 {} 手动更新物品类别: itemId={}, category={}", userId, id, category);
+        
+        // 1. 查询物品信息，不存在则抛出NotFoundException
+        Item item = itemMapper.selectById(id);
+        if (item == null || item.getDeleted() == 1) {
+            log.warn("物品不存在或已删除: itemId={}", id);
+            throw new NotFoundException("物品信息不存在");
+        }
+        
+        // 2. 验证userId是否为物品发布者，不是则抛出ForbiddenException
+        if (!item.getUserId().equals(userId)) {
+            log.warn("用户 {} 无权修改物品 {} 的类别", userId, id);
+            throw new com.campus.lostandfound.exception.ForbiddenException("无权修改他人发布的信息");
+        }
+        
+        // 3. 更新类别
+        item.setCategory(category);
+        itemMapper.updateById(item);
+        log.info("物品类别更新成功: itemId={}, category={}", id, category);
+        
+        // 4. 返回更新后的ItemVO
+        return convertToVO(item);
+    }
 }

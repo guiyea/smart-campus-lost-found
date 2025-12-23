@@ -79,6 +79,10 @@ aliyun:
     access-key-secret: ${ALIYUN_OSS_ACCESS_KEY_SECRET:}
     bucket-name: ${OSS_BUCKET_NAME:oss-pai-99w3ve23kstcxnmhyh-cn-shanghai}
     base-url: ${OSS_BASE_URL:https://oss-pai-99w3ve23kstcxnmhyh-cn-shanghai.oss-cn-shanghai.aliyuncs.com}
+  # 阿里云视觉智能配置（复用OSS的accessKey）
+  vision:
+    region-id: ${ALIYUN_VISION_REGION_ID:cn-shanghai}
+    timeout: 5000  # 超时时间5秒
 
 # 百度AI配置
 baidu:
@@ -90,6 +94,9 @@ baidu:
 # 高德地图配置
 amap:
   key: ${AMAP_KEY:}
+  base-url: https://restapi.amap.com/v3
+  connect-timeout: 3000  # 连接超时时间（毫秒）
+  read-timeout: 5000     # 读取超时时间（毫秒）
 
 # 日志配置
 logging:

@@ -43,4 +43,15 @@ public interface ItemService {
      * @return 物品详情VO
      */
     ItemDetailVO getDetail(Long id);
+    
+    /**
+     * 手动更新物品类别
+     * 用于AI识别失败或识别不准确时的降级方案
+     * 
+     * @param id 物品ID
+     * @param category 物品类别
+     * @param userId 当前用户ID
+     * @return 更新后的物品信息VO
+     */
+    ItemVO updateCategory(Long id, String category, Long userId);
 }

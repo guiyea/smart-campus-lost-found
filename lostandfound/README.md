@@ -149,7 +149,7 @@ lostandfound/
 - **ORM**: MyBatis-Plus 3.5.5
 - **安全**: Spring Security + JWT
 - **文件存储**: 阿里云OSS
-- **AI服务**: 百度AI图像识别
+- **AI服务**: 阿里云视觉智能图像识别
 - **地图服务**: 高德地图API
 - **测试框架**: JUnit 5 + jqwik (属性测试)
 
@@ -378,9 +378,7 @@ curl -X GET http://localhost:8080/api/v1/users/me ^
 - `OSS_ACCESS_KEY_ID`: OSS访问密钥ID
 - `OSS_ACCESS_KEY_SECRET`: OSS访问密钥
 - `OSS_BUCKET_NAME`: OSS存储桶名称
-- `BAIDU_AI_APP_ID`: 百度AI应用ID
-- `BAIDU_AI_API_KEY`: 百度AI API密钥
-- `BAIDU_AI_SECRET_KEY`: 百度AI密钥
+- `ALIYUN_VISION_REGION_ID`: 阿里云视觉智能区域ID（默认cn-shanghai）
 - `AMAP_KEY`: 高德地图API密钥
 
 ### Profile配置
