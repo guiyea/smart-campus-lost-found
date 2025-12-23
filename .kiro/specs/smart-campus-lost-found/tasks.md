@@ -421,7 +421,12 @@
 ## 第四阶段：物品信息模块
 
 - [ ] 10. 物品信息发布
-  - [ ] 10.1 创建物品相关DTO和VO
+  - [x] 10.1 创建物品相关DTO和VO
+
+
+
+
+
     - 创建`model/dto/ItemDTO.java`:
       - title(@NotBlank, @Size(2,50)): 标题
       - description(@NotBlank, @Size(10,1000)): 描述
@@ -451,7 +456,12 @@
     - 创建`model/vo/ItemDetailVO.java`: 继承ItemVO，增加matchRecommendations(List<ItemVO>)
     - _Requirements: 2.1, 2.6, 5.3_
 
-  - [ ] 10.2 实现物品信息Service - 发布功能
+  - [x] 10.2 实现物品信息Service - 发布功能
+
+
+
+
+
     - 创建`service/ItemService.java`接口
     - 创建`service/impl/ItemServiceImpl.java`
     - 实现publish(ItemDTO dto, Long userId):
@@ -464,7 +474,12 @@
       - 返回ItemVO
     - _Requirements: 2.1, 7.2_
 
-  - [ ] 10.3 实现物品信息Controller - 发布接口
+  - [x] 10.3 实现物品信息Controller - 发布接口
+
+
+
+
+
     - 创建`controller/ItemController.java`，使用@RequestMapping("/api/v1/items")
     - 实现POST /: 发布物品信息
       - 使用@Valid验证ItemDTO
@@ -481,7 +496,12 @@
     - **Validates: Requirements 2.1**
 
 - [ ] 11. 物品信息编辑和删除
-  - [ ] 11.1 实现物品编辑Service
+  - [x] 11.1 实现物品编辑Service
+
+
+
+
+
     - 在ItemServiceImpl中实现update(Long id, ItemDTO dto, Long userId):
       - 查询物品信息，不存在则抛出NotFoundException
       - 验证userId是否为物品发布者，不是则抛出ForbiddenException("无权修改他人发布的信息")

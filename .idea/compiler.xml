@@ -7,15 +7,32 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="common" />
-        <module name="gateway-service" />
-        <module name="matching-service" />
-        <module name="item-service" />
-        <module name="point-service" />
-        <module name="user-service" />
-        <module name="admin-service" />
-        <module name="notification-service" />
+      </profile>
+      <profile name="Annotation profile for lostandfound" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.42/lombok-1.18.42.jar" />
+        </processorPath>
+        <module name="lostandfound" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="admin-service" target="11" />
+      <module name="common" target="11" />
+      <module name="gateway-service" target="11" />
+      <module name="item-service" target="11" />
+      <module name="lost-found-platform" target="11" />
+      <module name="matching-service" target="11" />
+      <module name="notification-service" target="11" />
+      <module name="point-service" target="11" />
+      <module name="user-service" target="11" />
+    </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="lostandfound" options="-parameters" />
+    </option>
   </component>
 </project>
