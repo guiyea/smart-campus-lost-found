@@ -1173,8 +1173,8 @@
     - 使用@CacheEvict和@Cacheable注解简化缓存操作
     - _Requirements: 10.5_
 
-- [ ] 30. 接口限流
-  - [ ] 30.1 实现限流拦截器
+- [-] 30. 接口限流
+  - [x] 30.1 实现限流拦截器
     - 创建`config/RateLimitInterceptor.java`:
       - 实现HandlerInterceptor接口
       - 使用Redis滑动窗口算法实现限流
@@ -1184,7 +1184,7 @@
     - 在WebMvcConfig中注册拦截器
     - _Requirements: 10.3_
 
-  - [ ] 30.2 配置限流白名单
+  - [x] 30.2 配置限流白名单
     - 静态资源路径不限流
     - 健康检查接口不限流
     - 可配置IP白名单

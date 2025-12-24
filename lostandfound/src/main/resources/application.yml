@@ -105,3 +105,8 @@ logging:
     com.campus.lostandfound: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# 限流配置
+rate-limit:
+  enabled: true
+  whitelist-ips: 127.0.0.1,0:0:0:0:0:0:0:1
