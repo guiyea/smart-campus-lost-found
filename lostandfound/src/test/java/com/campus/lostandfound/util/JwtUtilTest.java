@@ -1,6 +1,7 @@
 package com.campus.lostandfound.util;
 
 import io.jsonwebtoken.Claims;
+import net.jqwik.api.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -187,5 +188,87 @@ class JwtUtilTest {
         
         assertEquals("access", accessClaims.get("type"));
         assertEquals("refresh", refreshClaims.get("type"));
+    }
+
+    // Property-based tests using jqwik
+    
+    /**
+     * Property 2: 登录认证往返一致性
+     * Feature: smart-campus-lost-found, Property 2: 登录认证往返一致性
+     * Validates: Requirements 1.2, 10.1
+     */
+    @Property(tries = 100)
+    void testTokenRoundTripConsistency(@ForAll("validUserIds") Long userId, 
+                                     @ForAll("validRoles") Integer role) {
+        // Given - 设置JwtUtil实例
+        JwtUtil testJwtUtil = new JwtUtil();
+        ReflectionTestUtils.setField(testJwtUtil, "secretKey", 
+            "your-secret-key-change-this-in-production-at-least-256-bits-long");
+        ReflectionTestUtils.setField(testJwtUtil, "accessTokenExpiration", 7200000L); // 2小时
+        ReflectionTestUtils.setField(testJwtUtil, "refreshTokenExpiration", 604800000L); // 7天
+        
+        String studentId = "STU" + userId; // 生成对应的学号
+        
+        // When - 生成令牌并解析
+        String token = testJwtUtil.generateAccessToken(userId, studentId, role);
+        Long extractedUserId = testJwtUtil.getUserIdFromToken(token);
+        Integer extractedRole = testJwtUtil.getRoleFromToken(token);
+        
+        // Then - 解析后应返回相同的用户ID和角色
+        assertEquals(userId, extractedUserId, 
+            "Token round trip should preserve user ID");
+        assertEquals(role, extractedRole, 
+            "Token round trip should preserve user role");
+    }
+    
+    /**
+     * Property 2: 登录认证往返一致性 - 过期令牌验证
+     * Feature: smart-campus-lost-found, Property 2: 登录认证往返一致性
+     * Validates: Requirements 1.2, 10.1
+     */
+    @Property(tries = 100)
+    void testExpiredTokenValidation(@ForAll("validUserIds") Long userId,
+                                  @ForAll("validRoles") Integer role) {
+        // Given - 创建一个过期时间很短的JwtUtil实例
+        JwtUtil expiredJwtUtil = new JwtUtil();
+        ReflectionTestUtils.setField(expiredJwtUtil, "secretKey", 
+            "your-secret-key-change-this-in-production-at-least-256-bits-long");
+        ReflectionTestUtils.setField(expiredJwtUtil, "accessTokenExpiration", 1L); // 1毫秒
+        ReflectionTestUtils.setField(expiredJwtUtil, "refreshTokenExpiration", 1L);
+        
+        // 创建一个正常的JwtUtil实例用于验证
+        JwtUtil validationJwtUtil = new JwtUtil();
+        ReflectionTestUtils.setField(validationJwtUtil, "secretKey", 
+            "your-secret-key-change-this-in-production-at-least-256-bits-long");
+        ReflectionTestUtils.setField(validationJwtUtil, "accessTokenExpiration", 7200000L);
+        ReflectionTestUtils.setField(validationJwtUtil, "refreshTokenExpiration", 604800000L);
+        
+        String studentId = "STU" + userId;
+        String token = expiredJwtUtil.generateAccessToken(userId, studentId, role);
+        
+        // Wait for token to expire
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        
+        // When & Then - 对于任意过期令牌，validateToken应返回false
+        assertFalse(validationJwtUtil.validateToken(token), 
+            "Expired token should be invalid");
+        assertTrue(validationJwtUtil.isTokenExpired(token), 
+            "Expired token should be detected as expired");
+    }
+    
+    // Generators for property-based tests
+    
+    @Provide
+    Arbitrary<Long> validUserIds() {
+        return Arbitraries.longs().between(1L, 999999L);
+    }
+    
+    @Provide 
+    Arbitrary<Integer> validRoles() {
+        return Arbitraries.integers().between(0, 1); // 0: 普通用户, 1: 管理员
     }
 }

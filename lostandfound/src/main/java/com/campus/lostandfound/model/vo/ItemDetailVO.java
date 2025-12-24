@@ -16,5 +16,5 @@ public class ItemDetailVO extends ItemVO {
     /**
      * 匹配推荐列表
      */
-    private List<ItemVO> matchRecommendations;
+    private List<MatchVO> matchRecommendations;
 }

@@ -162,7 +162,8 @@
     - 令牌无效或过期时不设置认证信息，让后续过滤器处理
     - _Requirements: 10.1_
 
-  - [ ]* 4.4 编写JWT认证属性测试
+  - [x] 4.4 编写JWT认证属性测试
+
     - 使用jqwik框架
     - **Property 2: 登录认证往返一致性**
     - 测试: 对于任意有效用户ID和角色，生成的令牌解析后应返回相同的用户ID和角色
@@ -213,14 +214,15 @@
     - 返回Result<UserVO>
     - _Requirements: 1.1_
 
-  - [ ]* 5.4 编写用户注册属性测试
+  - [x] 5.4 编写用户注册属性测试
+
     - **Property 1: 用户注册数据完整性**
     - 测试: 对于任意有效注册信息，注册后查询用户应返回相同的studentId, name, phone
     - 测试: 对于任意重复学号，注册应抛出异常
     - 配置最少100次迭代
     - **Validates: Requirements 1.1**
 
-  - [ ]* 5.5 编写密码加密属性测试
+  - [x]* 5.5 编写密码加密属性测试
     - **Property 20: 密码加密存储**
     - 测试: 对于任意密码，存储后的值应以$2a$或$2b$开头（BCrypt格式）
     - 测试: 对于任意密码，存储值与原始密码不相等
@@ -335,7 +337,8 @@
     - 使用@PreAuthorize("hasRole('ADMIN')")限制管理员接口
     - _Requirements: 1.3, 1.5_
 
-  - [ ]* 7.4 编写用户信息更新权限属性测试
+  - [x] 7.4 编写用户信息更新权限属性测试
+
     - **Property 3: 用户信息更新权限验证**
     - 测试: 对于任意两个不同用户A和B，用户A的令牌尝试更新用户B的信息应被拒绝
     - 测试: 对于任意用户，使用自己的令牌更新自己的信息应成功
@@ -389,7 +392,8 @@
     - 实现deleteFile(String fileUrl): 从OSS删除文件
     - _Requirements: 2.1, 3.5, 10.2_
 
-  - [ ]* 9.3 编写图片压缩属性测试
+  - [x] 9.3 编写图片压缩属性测试
+
     - **Property 7: 图片压缩阈值处理**
     - 测试: 对于任意大于5MB的图片，压缩后大小应<=5MB
     - 测试: 对于任意小于5MB的图片，不应进行压缩
@@ -534,7 +538,8 @@
     - 在ItemController中实现DELETE /{id}: 删除物品信息
     - _Requirements: 2.4, 2.5_
 
-  - [ ]* 11.4 编写软删除属性测试
+  - [x] 11.4 编写软删除属性测试
+
     - **Property 5: 软删除数据保留**
     - 测试: 对于任意已发布物品，删除后数据库中deleted字段应为1
     - 测试: 对于任意已删除物品，直接查询数据库应能找到原始数据
@@ -561,18 +566,12 @@
   - [x] 12.2 实现物品详情Controller
 
 
-
-
-
-
-
-
-
     - 在ItemController中实现GET /{id}: 获取物品详情
     - 返回Result<ItemDetailVO>
     - _Requirements: 2.6_
 
-  - [ ]* 12.3 编写浏览计数属性测试
+  - [x] 12.3 编写浏览计数属性测试
+
     - **Property 6: 浏览计数单调递增**
     - 测试: 对于任意物品，每次调用getDetail后viewCount应比之前增加1
     - 测试: 对于任意物品，连续N次调用getDetail后viewCount应增加N
@@ -645,7 +644,11 @@
       - 如果识别失败，保留用户手动选择的category
     - _Requirements: 2.2, 3.1_
 
-  - [-] 14.4 实现手动类别选择接口
+  - [x] 14.4 实现手动类别选择接口
+
+
+
+
 
 
 
@@ -666,7 +669,10 @@
       - 创建RestTemplate Bean用于调用高德API
     - _Requirements: 4.1_
 
-  - [ ] 15.2 实现地理位置Service
+  - [x] 15.2 实现地理位置Service
+
+
+
     - 创建`service/LocationService.java`接口:
       - GeoPoint geocode(String address): 地址转坐标
       - String reverseGeocode(Double lng, Double lat): 坐标转地址
@@ -685,7 +691,10 @@
         - 或使用Redis GEO功能实现（GEORADIUS）
     - _Requirements: 4.1, 4.3_
 
-  - [ ] 15.3 实现附近物品搜索
+  - [x] 15.3 实现附近物品搜索
+
+
+
     - 在ItemServiceImpl中实现getNearby(Double lng, Double lat, Integer radius):
       - 调用LocationService.searchInRadius()获取范围内物品ID
       - 批量查询物品信息
@@ -697,7 +706,8 @@
       - 返回Result<List<ItemVO>>
     - _Requirements: 4.3_
 
-  - [ ]* 15.4 编写地理范围查询属性测试
+  - [x] 15.4 编写地理范围查询属性测试
+
     - **Property 8: 地理范围查询准确性**
     - 测试: 对于任意中心点和半径，返回的所有物品距离中心点应<=radius
     - 测试: 对于任意中心点和半径，范围外的物品不应出现在结果中
@@ -708,7 +718,12 @@
 ## 第七阶段：搜索与筛选模块
 
 - [ ] 16. 全文搜索与筛选
-  - [ ] 16.1 实现搜索Service
+  - [x] 16.1 实现搜索Service
+
+
+
+
+
     - 在ItemServiceImpl中实现search(ItemSearchDTO dto):
       - 构建MyBatis-Plus QueryWrapper:
         - deleted = 0（排除已删除）
@@ -727,7 +742,12 @@
       - 返回PageResult<ItemVO>
     - _Requirements: 8.1, 8.2, 8.3, 8.4_
 
-  - [ ] 16.2 实现搜索Controller
+  - [x] 16.2 实现搜索Controller
+
+
+
+
+
     - 在ItemController中实现GET /: 搜索物品列表
       - 使用@ModelAttribute接收ItemSearchDTO
       - 调用ItemService.search()
@@ -736,7 +756,9 @@
       - 返回最近7天浏览量最高的20条记录
     - _Requirements: 8.1, 8.5_
 
-  - [ ]* 16.3 编写搜索结果属性测试
+  - [x] 16.3 编写搜索结果属性测试
+
+
     - **Property 16: 搜索结果相关性**
     - 测试: 对于任意关键词搜索，返回的所有物品的title或description或tags应包含该关键词
     - 配置最少100次迭代
@@ -757,7 +779,12 @@
     - 配置最少100次迭代
     - **Validates: Requirements 8.4**
 
-- [ ] 17. Checkpoint - 搜索模块验证
+- [x] 17. Checkpoint - 搜索模块验证
+
+
+
+
+
   - 运行`mvn clean verify`确保所有测试通过
   - 测试关键词搜索、多条件筛选、分页功能
   - 测试附近物品搜索功能
@@ -765,8 +792,14 @@
 
 ## 第八阶段：智能匹配模块
 
-- [ ] 18. 匹配算法实现
-  - [ ] 18.1 设计匹配分数计算
+- [x] 18. 匹配算法实现
+
+
+
+
+  - [x] 18.1 设计匹配分数计算
+
+
     - 创建`service/MatchService.java`接口:
       - List<MatchResult> calculateMatch(Item item): 计算匹配
       - Result<List<MatchVO>> getRecommendations(Long itemId): 获取推荐
@@ -776,7 +809,9 @@
     - 创建`model/vo/MatchVO.java`: 继承ItemVO，增加matchScore
     - _Requirements: 5.1_
 
-  - [ ] 18.2 实现匹配分数计算Service
+  - [x] 18.2 实现匹配分数计算Service
+
+
     - 创建`service/impl/MatchServiceImpl.java`
     - 实现calculateMatch(Item item):
       - 查询相反类型的物品列表（失物找招领，招领找失物）
@@ -800,7 +835,12 @@
     - 配置最少100次迭代
     - **Validates: Requirements 5.1**
 
-  - [ ] 18.4 实现匹配推荐Service
+  - [x] 18.4 实现匹配推荐Service
+
+
+
+
+
     - 在MatchServiceImpl中实现getRecommendations(Long itemId):
       - 查询物品信息
       - 调用calculateMatch()获取匹配结果
@@ -817,7 +857,11 @@
     - **Validates: Requirements 5.3**
 
 - [ ] 19. 匹配确认与通知
-  - [ ] 19.1 实现匹配确认Service
+  - [x] 19.1 实现匹配确认Service
+
+
+
+
     - 在MatchServiceImpl中实现confirmMatch(Long itemId, Long matchedItemId, Long userId):
       - 验证当前用户是itemId或matchedItemId的发布者
       - 查询两个物品信息，验证状态为待处理
@@ -835,7 +879,8 @@
     - 配置最少100次迭代
     - **Validates: Requirements 5.4**
 
-  - [ ] 19.3 实现自动匹配触发
+  - [x] 19.3 实现自动匹配触发
+
     - 修改ItemServiceImpl.publish()方法:
       - 发布成功后，异步调用MatchService.calculateMatch()
       - 筛选匹配分数>=70的结果
@@ -843,14 +888,14 @@
       - 消息内容包含匹配物品的简要信息和链接
     - _Requirements: 5.2_
 
-  - [ ] 19.4 实现匹配反馈Service
+  - [x] 19.4 实现匹配反馈Service
     - 在MatchServiceImpl中实现feedback(MatchFeedbackDTO dto):
       - 创建`model/dto/MatchFeedbackDTO.java`: itemId, matchedItemId, isAccurate(boolean), comment
       - 记录反馈数据到数据库（可用于后续优化算法）
       - 如果反馈不准确，可考虑降低该类型匹配的权重
     - _Requirements: 5.5_
 
-  - [ ] 19.5 实现匹配Controller
+  - [x] 19.5 实现匹配Controller
     - 创建`controller/MatchController.java`，使用@RequestMapping("/api/v1/matches")
     - 实现GET /recommendations/{itemId}: 获取匹配推荐列表
     - 实现POST /confirm: 确认匹配
@@ -861,13 +906,13 @@
 ## 第九阶段：消息通知模块
 
 - [ ] 20. 站内消息功能
-  - [ ] 20.1 创建消息相关DTO和VO
+  - [x] 20.1 创建消息相关DTO和VO
     - 创建`model/vo/MessageVO.java`: id, title, content, type, typeName, relatedId, isRead, createdAt
     - 创建`model/dto/SendMessageDTO.java`: userId, title, content, type, relatedId
     - 消息类型枚举: 0-系统通知, 1-匹配通知, 2-留言通知
     - _Requirements: 6.1, 6.2_
 
-  - [ ] 20.2 实现消息Service
+  - [x] 20.2 实现消息Service
     - 创建`service/MessageService.java`接口:
       - void send(SendMessageDTO dto): 发送消息
       - void sendBatch(List<SendMessageDTO> dtos): 批量发送
@@ -886,21 +931,22 @@
       - 实现getUnreadCount(): COUNT(*) WHERE user_id=? AND is_read=0
     - _Requirements: 6.1, 6.2, 6.3, 6.4_
 
-  - [ ]* 20.3 编写消息列表排序属性测试
+  - [x] 20.3 编写消息列表排序属性测试
     - **Property 12: 消息列表时间排序**
     - 测试: 对于任意用户的消息列表，结果应按createdAt降序排列
     - 测试: 对于任意两条相邻消息，前一条的createdAt应>=后一条
     - 配置最少100次迭代
     - **Validates: Requirements 6.3**
 
-  - [ ]* 20.4 编写消息已读状态属性测试
+  - [x] 20.4 编写消息已读状态属性测试
+
     - **Property 13: 消息已读状态更新**
     - 测试: 对于任意未读消息，调用markAsRead后isRead应变为true
     - 测试: 对于任意已读消息，再次调用markAsRead不应报错
     - 配置最少100次迭代
     - **Validates: Requirements 6.4**
 
-  - [ ] 20.5 实现消息Controller
+  - [x] 20.5 实现消息Controller
     - 创建`controller/MessageController.java`，使用@RequestMapping("/api/v1/messages")
     - 实现GET /: 获取消息列表
       - 参数: type(可选), isRead(可选), pageNum, pageSize
@@ -910,14 +956,14 @@
     - _Requirements: 6.3, 6.4_
 
 - [ ] 21. WebSocket实时推送
-  - [ ] 21.1 配置WebSocket
+  - [x] 21.1 配置WebSocket
     - 创建`config/WebSocketConfig.java`:
       - 实现WebSocketConfigurer接口
       - 注册WebSocket端点: /ws/messages
       - 配置允许的来源（CORS）
     - _Requirements: 6.5_
 
-  - [ ] 21.2 实现WebSocket处理器
+  - [x] 21.2 实现WebSocket处理器
     - 创建`websocket/MessageWebSocket.java`:
       - 使用@ServerEndpoint("/ws/messages/{token}")
       - 维护用户ID到Session的映射: ConcurrentHashMap<Long, Session>
@@ -927,14 +973,14 @@
       - 实现sendToUser(Long userId, String message): 向指定用户推送消息
     - _Requirements: 6.5_
 
-  - [ ] 21.3 集成WebSocket到消息发送流程
+  - [x] 21.3 集成WebSocket到消息发送流程
     - 修改MessageServiceImpl.send()方法:
       - 保存消息到数据库后
       - 检查用户是否有活跃的WebSocket连接
       - 如果有，通过WebSocket实时推送消息内容
     - _Requirements: 6.5_
 
-- [ ] 22. Checkpoint - 消息模块验证
+- [x] 22. Checkpoint - 消息模块验证
   - 运行`mvn clean verify`确保所有测试通过
   - 测试消息发送、列表查询、标记已读功能
   - 测试WebSocket连接和实时推送功能

@@ -64,6 +64,9 @@ public class SecurityConfig {
                 // 公开路径白名单 - 物品信息GET请求（浏览功能）
                 .requestMatchers(HttpMethod.GET, "/api/v1/items/**").permitAll()
                 
+                // 公开路径白名单 - WebSocket端点（认证通过token参数进行）
+                .requestMatchers("/ws/**").permitAll()
+                
                 // 公开路径白名单 - API文档
                 .requestMatchers("/swagger-ui/**").permitAll()
                 .requestMatchers("/v3/api-docs/**").permitAll()

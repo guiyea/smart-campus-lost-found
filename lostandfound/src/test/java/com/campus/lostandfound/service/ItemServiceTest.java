@@ -1,5 +1,6 @@
 package com.campus.lostandfound.service;
 
+import com.campus.lostandfound.common.Result;
 import com.campus.lostandfound.model.dto.ItemDTO;
 import com.campus.lostandfound.model.entity.Item;
 import com.campus.lostandfound.model.entity.ItemImage;
@@ -7,6 +8,7 @@ import com.campus.lostandfound.model.entity.ItemTag;
 import com.campus.lostandfound.model.entity.User;
 import com.campus.lostandfound.model.vo.ItemDetailVO;
 import com.campus.lostandfound.model.vo.ItemVO;
+import com.campus.lostandfound.model.vo.MatchVO;
 import com.campus.lostandfound.repository.ItemImageMapper;
 import com.campus.lostandfound.repository.ItemMapper;
 import com.campus.lostandfound.repository.ItemTagMapper;
@@ -410,9 +412,9 @@ class ItemServiceTest {
         tag2.setItemId(itemId);
         tag2.setTag("皮质");
         
-        List<ItemVO> matchRecommendations = Arrays.asList(
-            createMockItemVO(200L, "找到钱包", 1),
-            createMockItemVO(201L, "拾获钱包", 1)
+        List<MatchVO> matchRecommendations = Arrays.asList(
+            createMockMatchVO(200L, "找到钱包", 1),
+            createMockMatchVO(201L, "拾获钱包", 1)
         );
         
         when(itemMapper.selectById(itemId)).thenReturn(item);
@@ -420,7 +422,7 @@ class ItemServiceTest {
         when(userMapper.selectById(1L)).thenReturn(user);
         when(itemImageMapper.selectList(any())).thenReturn(Arrays.asList(image1, image2));
         when(itemTagMapper.selectList(any())).thenReturn(Arrays.asList(tag1, tag2));
-        when(matchService.getRecommendations(itemId)).thenReturn(matchRecommendations);
+        when(matchService.getRecommendations(itemId)).thenReturn(Result.success(matchRecommendations));
         
         // When
         ItemDetailVO result = itemService.getDetail(itemId);
@@ -507,6 +509,27 @@ class ItemServiceTest {
         vo.setStatus(0);
         vo.setViewCount(0);
         vo.setCreatedAt(LocalDateTime.now());
+        return vo;
+    }
+    
+    private MatchVO createMockMatchVO(Long id, String title, Integer type) {
+        MatchVO vo = new MatchVO();
+        vo.setId(id);
+        vo.setTitle(title);
+        vo.setType(type);
+        vo.setUserId(2L);
+        vo.setUserName("李四");
+        vo.setDescription("测试描述");
+        vo.setCategory("钱包");
+        vo.setStatus(0);
+        vo.setViewCount(0);
+        vo.setCreatedAt(LocalDateTime.now());
+        // 设置匹配分数
+        vo.setMatchScore(new java.math.BigDecimal("85.5"));
+        vo.setCategoryScore(new java.math.BigDecimal("30"));
+        vo.setTagScore(new java.math.BigDecimal("25.5"));
+        vo.setTimeScore(new java.math.BigDecimal("15"));
+        vo.setLocationScore(new java.math.BigDecimal("15"));
         return vo;
     }
 }

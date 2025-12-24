@@ -154,6 +154,32 @@ CREATE TABLE IF NOT EXISTS `point_record` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='积分记录表';
 
 -- =============================================
+-- 8. 匹配反馈表 (match_feedback)
+-- =============================================
+CREATE TABLE IF NOT EXISTS `match_feedback` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '反馈ID',
+    `item_id` BIGINT NOT NULL COMMENT '物品ID',
+    `matched_item_id` BIGINT NOT NULL COMMENT '匹配的物品ID',
+    `user_id` BIGINT NOT NULL COMMENT '反馈用户ID',
+    `is_accurate` TINYINT NOT NULL COMMENT '是否准确匹配: 0-不准确, 1-准确',
+    `comment` TEXT DEFAULT NULL COMMENT '反馈评论',
+    `match_score` DECIMAL(5, 2) DEFAULT NULL COMMENT '匹配分数(记录当时的匹配分数)',
+    `item_category` VARCHAR(50) DEFAULT NULL COMMENT '物品类别(用于算法优化)',
+    `matched_item_category` VARCHAR(50) DEFAULT NULL COMMENT '匹配物品类别(用于算法优化)',
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (`id`),
+    KEY `idx_item_id` (`item_id`),
+    KEY `idx_matched_item_id` (`matched_item_id`),
+    KEY `idx_user_id` (`user_id`),
+    KEY `idx_is_accurate` (`is_accurate`),
+    KEY `idx_created_at` (`created_at` DESC),
+    KEY `idx_category_accuracy` (`item_category`, `matched_item_category`, `is_accurate`),
+    CONSTRAINT `fk_match_feedback_item` FOREIGN KEY (`item_id`) REFERENCES `item` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_match_feedback_matched_item` FOREIGN KEY (`matched_item_id`) REFERENCES `item` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_match_feedback_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='匹配反馈表';
+
+-- =============================================
 -- 索引说明
 -- =============================================
 -- user表:
@@ -200,6 +226,14 @@ CREATE TABLE IF NOT EXISTS `point_record` (
 --   - idx_user_id: 用户ID索引,用于查询用户的积分记录
 --   - idx_created_at: 创建时间降序索引,用于时间排序
 --   - idx_user_time: 用户+时间复合索引,优化用户积分明细查询
+--
+-- match_feedback表:
+--   - idx_item_id: 物品ID索引,用于查询物品的反馈记录
+--   - idx_matched_item_id: 匹配物品ID索引,用于查询匹配物品的反馈记录
+--   - idx_user_id: 用户ID索引,用于查询用户的反馈记录
+--   - idx_is_accurate: 准确性索引,用于统计准确/不准确的反馈
+--   - idx_created_at: 创建时间降序索引,用于时间排序
+--   - idx_category_accuracy: 类别+准确性复合索引,用于算法优化分析
 
 -- =============================================
 -- 初始化完成

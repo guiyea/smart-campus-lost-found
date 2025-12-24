@@ -1,22 +1,29 @@
 package com.campus.lostandfound.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.campus.lostandfound.common.PageResult;
+import com.campus.lostandfound.common.Result;
 import com.campus.lostandfound.exception.NotFoundException;
 import com.campus.lostandfound.model.dto.ItemDTO;
+import com.campus.lostandfound.model.dto.ItemSearchDTO;
 import com.campus.lostandfound.model.entity.Item;
 import com.campus.lostandfound.model.entity.ItemImage;
 import com.campus.lostandfound.model.entity.ItemTag;
 import com.campus.lostandfound.model.entity.User;
 import com.campus.lostandfound.model.vo.ItemDetailVO;
 import com.campus.lostandfound.model.vo.ItemVO;
+import com.campus.lostandfound.model.vo.MatchVO;
 import com.campus.lostandfound.repository.ItemImageMapper;
 import com.campus.lostandfound.repository.ItemMapper;
 import com.campus.lostandfound.repository.ItemTagMapper;
 import com.campus.lostandfound.repository.UserMapper;
 import com.campus.lostandfound.service.ImageRecognitionService;
 import com.campus.lostandfound.service.ItemService;
+import com.campus.lostandfound.service.LocationService;
 import com.campus.lostandfound.service.MatchService;
 import com.campus.lostandfound.service.PointService;
+import com.campus.lostandfound.model.vo.GeoPoint;
 import com.campus.lostandfound.util.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,9 +31,12 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -44,6 +54,7 @@ public class ItemServiceImpl implements ItemService {
     private final PointService pointService;
     private final ImageRecognitionService imageRecognitionService;
     private final MatchService matchService;
+    private final LocationService locationService;
     private final RedisUtil redisUtil;
     
     /**
@@ -220,7 +231,8 @@ public class ItemServiceImpl implements ItemService {
         User user = userMapper.selectById(item.getUserId());
         
         // 5. 调用MatchService获取匹配推荐列表（前10条）
-        List<ItemVO> matchRecommendations = matchService.getRecommendations(id);
+        Result<List<MatchVO>> matchResult = matchService.getRecommendations(id);
+        List<MatchVO> matchRecommendations = matchResult.getData() != null ? matchResult.getData() : new ArrayList<>();
         
         // 6. 组装ItemDetailVO返回
         ItemDetailVO detailVO = new ItemDetailVO();
@@ -285,7 +297,8 @@ public class ItemServiceImpl implements ItemService {
     /**
      * 转换为ItemVO
      */
-    private ItemVO convertToVO(Item item) {
+    @Override
+    public ItemVO convertToVO(Item item) {
         ItemVO vo = new ItemVO();
         BeanUtils.copyProperties(item, vo);
         
@@ -345,5 +358,254 @@ public class ItemServiceImpl implements ItemService {
         
         // 4. 返回更新后的ItemVO
         return convertToVO(item);
+    }
+    
+    /**
+     * 获取附近的物品信息
+     * 基于用户当前位置返回指定半径范围内的物品列表
+     */
+    @Override
+    public List<ItemVO> getNearby(Double lng, Double lat, Integer radius) {
+        log.info("查询附近物品: 中心点=({}, {}), 半径={}米", lng, lat, radius);
+        
+        // 1. 参数校验和默认值处理
+        if (lng == null || lat == null) {
+            log.warn("查询附近物品失败：坐标为空");
+            return new ArrayList<>();
+        }
+        
+        // 默认半径1000米
+        if (radius == null || radius <= 0) {
+            radius = 1000;
+        }
+        
+        // 2. 调用LocationService.searchInRadius()获取范围内物品ID
+        List<Long> itemIds = locationService.searchInRadius(lng, lat, radius);
+        
+        if (itemIds.isEmpty()) {
+            log.info("附近无物品: 中心点=({}, {}), 半径={}米", lng, lat, radius);
+            return new ArrayList<>();
+        }
+        
+        log.info("范围内找到 {} 个物品ID", itemIds.size());
+        
+        // 3. 批量查询物品信息
+        List<Item> items = itemMapper.selectBatchIds(itemIds);
+        
+        if (items.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        // 4. 转换为ItemVO并计算距离
+        GeoPoint center = GeoPoint.of(lng, lat);
+        
+        List<ItemVO> result = items.stream()
+                .map(item -> {
+                    ItemVO vo = convertToVO(item);
+                    
+                    // 计算每个物品与中心点的距离
+                    if (item.getLongitude() != null && item.getLatitude() != null) {
+                        GeoPoint itemPoint = GeoPoint.of(
+                                item.getLongitude().doubleValue(),
+                                item.getLatitude().doubleValue()
+                        );
+                        Double distance = locationService.calculateDistance(center, itemPoint);
+                        vo.setDistance(distance);
+                    }
+                    
+                    return vo;
+                })
+                // 5. 按距离升序排序
+                .sorted(Comparator.comparing(ItemVO::getDistance, Comparator.nullsLast(Comparator.naturalOrder())))
+                .collect(Collectors.toList());
+        
+        log.info("附近物品查询完成: 中心点=({}, {}), 半径={}米, 结果数={}", lng, lat, radius, result.size());
+        
+        return result;
+    }
+    
+    /**
+     * 搜索物品列表
+     * 支持关键词搜索、多条件筛选、地理范围筛选和多种排序方式
+     */
+    @Override
+    public PageResult<ItemVO> search(ItemSearchDTO dto) {
+        log.info("搜索物品: keyword={}, type={}, category={}, status={}, sortBy={}, pageNum={}, pageSize={}",
+                dto.getKeyword(), dto.getType(), dto.getCategory(), dto.getStatus(), 
+                dto.getSortBy(), dto.getPageNum(), dto.getPageSize());
+        
+        // 1. 参数校验和默认值处理
+        int pageNum = dto.getPageNum() != null && dto.getPageNum() > 0 ? dto.getPageNum() : 1;
+        int pageSize = dto.getPageSize() != null && dto.getPageSize() > 0 ? dto.getPageSize() : 20;
+        // 限制每页最大20条
+        if (pageSize > 20) {
+            pageSize = 20;
+        }
+        
+        // 2. 如果有地理范围筛选，先获取范围内的物品ID
+        Set<Long> geoFilteredIds = null;
+        if (dto.getLongitude() != null && dto.getLatitude() != null && dto.getRadius() != null && dto.getRadius() > 0) {
+            List<Long> nearbyIds = locationService.searchInRadius(
+                    dto.getLongitude().doubleValue(),
+                    dto.getLatitude().doubleValue(),
+                    dto.getRadius()
+            );
+            geoFilteredIds = nearbyIds.stream().collect(Collectors.toSet());
+            log.info("地理范围筛选: 中心点=({}, {}), 半径={}米, 匹配数={}",
+                    dto.getLongitude(), dto.getLatitude(), dto.getRadius(), geoFilteredIds.size());
+            
+            // 如果地理范围内没有物品，直接返回空结果
+            if (geoFilteredIds.isEmpty()) {
+                return new PageResult<>(new ArrayList<>(), 0L, pageNum, pageSize);
+            }
+        }
+        
+        // 3. 如果有关键词，先查询匹配的标签对应的物品ID
+        Set<Long> tagMatchedIds = null;
+        if (StringUtils.hasText(dto.getKeyword())) {
+            LambdaQueryWrapper<ItemTag> tagWrapper = new LambdaQueryWrapper<>();
+            tagWrapper.like(ItemTag::getTag, dto.getKeyword());
+            List<ItemTag> matchedTags = itemTagMapper.selectList(tagWrapper);
+            tagMatchedIds = matchedTags.stream()
+                    .map(ItemTag::getItemId)
+                    .collect(Collectors.toSet());
+            log.info("标签关键词匹配: keyword={}, 匹配物品数={}", dto.getKeyword(), tagMatchedIds.size());
+        }
+        
+        // 4. 构建MyBatis-Plus QueryWrapper
+        LambdaQueryWrapper<Item> queryWrapper = new LambdaQueryWrapper<>();
+        
+        // deleted = 0（排除已删除）- 由于Item实体使用了@TableLogic，MyBatis-Plus会自动处理
+        // 但为了明确，我们显式添加条件
+        queryWrapper.eq(Item::getDeleted, 0);
+        
+        // 如果keyword不为空: title LIKE %keyword% OR description LIKE %keyword% OR 存在匹配的tag
+        if (StringUtils.hasText(dto.getKeyword())) {
+            final Set<Long> finalTagMatchedIds = tagMatchedIds;
+            queryWrapper.and(wrapper -> {
+                wrapper.like(Item::getTitle, dto.getKeyword())
+                       .or()
+                       .like(Item::getDescription, dto.getKeyword());
+                // 如果有标签匹配的物品ID，添加到OR条件中
+                if (finalTagMatchedIds != null && !finalTagMatchedIds.isEmpty()) {
+                    wrapper.or().in(Item::getId, finalTagMatchedIds);
+                }
+            });
+        }
+        
+        // 如果type不为空: type = dto.type
+        if (dto.getType() != null) {
+            queryWrapper.eq(Item::getType, dto.getType());
+        }
+        
+        // 如果category不为空: category = dto.category
+        if (StringUtils.hasText(dto.getCategory())) {
+            queryWrapper.eq(Item::getCategory, dto.getCategory());
+        }
+        
+        // 如果status不为空: status = dto.status
+        if (dto.getStatus() != null) {
+            queryWrapper.eq(Item::getStatus, dto.getStatus());
+        }
+        
+        // 如果startTime不为空: event_time >= startTime
+        if (dto.getStartTime() != null) {
+            queryWrapper.ge(Item::getEventTime, dto.getStartTime());
+        }
+        
+        // 如果endTime不为空: event_time <= endTime
+        if (dto.getEndTime() != null) {
+            queryWrapper.le(Item::getEventTime, dto.getEndTime());
+        }
+        
+        // 如果有地理范围: 使用子查询筛选范围内的物品ID
+        if (geoFilteredIds != null) {
+            queryWrapper.in(Item::getId, geoFilteredIds);
+        }
+        
+        // 5. 根据sortBy设置排序
+        String sortBy = dto.getSortBy();
+        boolean needDistanceSort = "distance".equalsIgnoreCase(sortBy) && 
+                dto.getLongitude() != null && dto.getLatitude() != null;
+        
+        if (!needDistanceSort) {
+            // time: ORDER BY created_at DESC (默认排序)
+            // match: 预留，后续实现匹配度排序，目前使用时间排序
+            queryWrapper.orderByDesc(Item::getCreatedAt);
+        }
+        
+        // 6. 使用MyBatis-Plus分页插件进行分页
+        Page<Item> page = new Page<>(pageNum, pageSize);
+        Page<Item> resultPage = itemMapper.selectPage(page, queryWrapper);
+        
+        log.info("查询结果: 总数={}, 当前页数量={}", resultPage.getTotal(), resultPage.getRecords().size());
+        
+        // 7. 转换为ItemVO列表
+        List<ItemVO> voList = resultPage.getRecords().stream()
+                .map(item -> {
+                    ItemVO vo = convertToVO(item);
+                    
+                    // 如果需要按距离排序，计算距离
+                    if (dto.getLongitude() != null && dto.getLatitude() != null &&
+                            item.getLongitude() != null && item.getLatitude() != null) {
+                        GeoPoint center = GeoPoint.of(dto.getLongitude().doubleValue(), dto.getLatitude().doubleValue());
+                        GeoPoint itemPoint = GeoPoint.of(item.getLongitude().doubleValue(), item.getLatitude().doubleValue());
+                        Double distance = locationService.calculateDistance(center, itemPoint);
+                        vo.setDistance(distance);
+                    }
+                    
+                    return vo;
+                })
+                .collect(Collectors.toList());
+        
+        // 8. 如果需要按距离排序，在内存中排序
+        if (needDistanceSort) {
+            voList = voList.stream()
+                    .sorted(Comparator.comparing(ItemVO::getDistance, Comparator.nullsLast(Comparator.naturalOrder())))
+                    .collect(Collectors.toList());
+        }
+        
+        // 9. 返回PageResult<ItemVO>
+        return new PageResult<>(voList, resultPage.getTotal(), pageNum, pageSize);
+    }
+    
+    /**
+     * 获取热门物品列表
+     * 返回最近7天浏览量最高的物品
+     */
+    @Override
+    public List<ItemVO> getHotItems(Integer limit) {
+        log.info("获取热门物品: limit={}", limit);
+        
+        // 1. 参数校验和默认值处理
+        if (limit == null || limit <= 0) {
+            limit = 20;
+        }
+        // 限制最大返回数量为20
+        if (limit > 20) {
+            limit = 20;
+        }
+        
+        // 2. 计算7天前的时间
+        java.time.LocalDateTime sevenDaysAgo = java.time.LocalDateTime.now().minusDays(7);
+        
+        // 3. 构建查询条件：最近7天、未删除、按浏览量降序
+        LambdaQueryWrapper<Item> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Item::getDeleted, 0)
+                   .ge(Item::getCreatedAt, sevenDaysAgo)
+                   .orderByDesc(Item::getViewCount)
+                   .last("LIMIT " + limit);
+        
+        // 4. 查询物品列表
+        List<Item> items = itemMapper.selectList(queryWrapper);
+        
+        log.info("热门物品查询完成: 结果数={}", items.size());
+        
+        // 5. 转换为ItemVO列表
+        List<ItemVO> result = items.stream()
+                .map(this::convertToVO)
+                .collect(Collectors.toList());
+        
+        return result;
     }
 }
