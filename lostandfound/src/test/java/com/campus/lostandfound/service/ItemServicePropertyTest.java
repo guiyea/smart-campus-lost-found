@@ -17,6 +17,7 @@ import com.campus.lostandfound.repository.ItemTagMapper;
 import com.campus.lostandfound.repository.UserMapper;
 import com.campus.lostandfound.service.impl.ItemServiceImpl;
 import com.campus.lostandfound.util.RedisUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.jqwik.api.*;
 import net.jqwik.api.constraints.IntRange;
 import org.mockito.ArgumentCaptor;
@@ -65,10 +66,12 @@ class ItemServicePropertyTest {
         MatchService matchService = mock(MatchService.class);
         LocationService locationService = mock(LocationService.class);
         RedisUtil redisUtil = mock(RedisUtil.class);
+        ObjectMapper objectMapper = new ObjectMapper();
+        CacheService cacheService = mock(CacheService.class);
         
         ItemServiceImpl itemService = new ItemServiceImpl(
                 itemMapper, itemImageMapper, itemTagMapper, userMapper,
-                pointService, imageRecognitionService, matchService, locationService, redisUtil);
+                pointService, imageRecognitionService, matchService, locationService, redisUtil, objectMapper, cacheService);
         
         // Create an existing item (simulating a published item)
         Long itemId = testData.itemId;
@@ -130,10 +133,12 @@ class ItemServicePropertyTest {
         MatchService matchService = mock(MatchService.class);
         LocationService locationService = mock(LocationService.class);
         RedisUtil redisUtil = mock(RedisUtil.class);
+        ObjectMapper objectMapper = new ObjectMapper();
+        CacheService cacheService = mock(CacheService.class);
         
         ItemServiceImpl itemService = new ItemServiceImpl(
                 itemMapper, itemImageMapper, itemTagMapper, userMapper,
-                pointService, imageRecognitionService, matchService, locationService, redisUtil);
+                pointService, imageRecognitionService, matchService, locationService, redisUtil, objectMapper, cacheService);
         
         // Create an existing item
         Long itemId = testData.itemId;
@@ -207,10 +212,12 @@ class ItemServicePropertyTest {
         MatchService matchService = mock(MatchService.class);
         LocationService locationService = mock(LocationService.class);
         RedisUtil redisUtil = mock(RedisUtil.class);
+        ObjectMapper objectMapper = new ObjectMapper();
+        CacheService cacheService = mock(CacheService.class);
         
         ItemServiceImpl itemService = new ItemServiceImpl(
                 itemMapper, itemImageMapper, itemTagMapper, userMapper,
-                pointService, imageRecognitionService, matchService, locationService, redisUtil);
+                pointService, imageRecognitionService, matchService, locationService, redisUtil, objectMapper, cacheService);
         
         Long itemId = testData.itemId;
         Long userId = testData.userId;
@@ -405,10 +412,12 @@ class ItemServicePropertyTest {
         MatchService matchService = mock(MatchService.class);
         LocationService locationService = mock(LocationService.class);
         RedisUtil redisUtil = mock(RedisUtil.class);
+        ObjectMapper objectMapper = new ObjectMapper();
+        CacheService cacheService = mock(CacheService.class);
         
         ItemServiceImpl itemService = new ItemServiceImpl(
                 itemMapper, itemImageMapper, itemTagMapper, userMapper,
-                pointService, imageRecognitionService, matchService, locationService, redisUtil);
+                pointService, imageRecognitionService, matchService, locationService, redisUtil, objectMapper, cacheService);
         
         Long itemId = testData.itemId;
         Long userId = testData.userId;
@@ -490,10 +499,12 @@ class ItemServicePropertyTest {
         MatchService matchService = mock(MatchService.class);
         LocationService locationService = mock(LocationService.class);
         RedisUtil redisUtil = mock(RedisUtil.class);
+        ObjectMapper objectMapper = new ObjectMapper();
+        CacheService cacheService = mock(CacheService.class);
         
         ItemServiceImpl itemService = new ItemServiceImpl(
                 itemMapper, itemImageMapper, itemTagMapper, userMapper,
-                pointService, imageRecognitionService, matchService, locationService, redisUtil);
+                pointService, imageRecognitionService, matchService, locationService, redisUtil, objectMapper, cacheService);
         
         Long itemId = testData.itemId;
         Long userId = testData.userId;
@@ -577,10 +588,12 @@ class ItemServicePropertyTest {
         MatchService matchService = mock(MatchService.class);
         LocationService locationService = mock(LocationService.class);
         RedisUtil redisUtil = mock(RedisUtil.class);
+        ObjectMapper objectMapper = new ObjectMapper();
+        CacheService cacheService = mock(CacheService.class);
         
         ItemServiceImpl itemService = new ItemServiceImpl(
                 itemMapper, itemImageMapper, itemTagMapper, userMapper,
-                pointService, imageRecognitionService, matchService, locationService, redisUtil);
+                pointService, imageRecognitionService, matchService, locationService, redisUtil, objectMapper, cacheService);
         
         // Create test items - some matching keyword, some not
         Long userId = 1L;
@@ -693,10 +706,12 @@ class ItemServicePropertyTest {
         MatchService matchService = mock(MatchService.class);
         LocationService locationService = mock(LocationService.class);
         RedisUtil redisUtil = mock(RedisUtil.class);
+        ObjectMapper objectMapper = new ObjectMapper();
+        CacheService cacheService = mock(CacheService.class);
         
         ItemServiceImpl itemService = new ItemServiceImpl(
                 itemMapper, itemImageMapper, itemTagMapper, userMapper,
-                pointService, imageRecognitionService, matchService, locationService, redisUtil);
+                pointService, imageRecognitionService, matchService, locationService, redisUtil, objectMapper, cacheService);
         
         // Create test items
         Long userId = 1L;

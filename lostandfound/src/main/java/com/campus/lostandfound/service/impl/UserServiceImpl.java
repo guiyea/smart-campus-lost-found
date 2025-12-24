@@ -9,8 +9,13 @@ import com.campus.lostandfound.model.dto.UpdateProfileDTO;
 import com.campus.lostandfound.model.entity.User;
 import com.campus.lostandfound.model.vo.UserVO;
 import com.campus.lostandfound.repository.UserMapper;
+import com.campus.lostandfound.service.CacheService;
 import com.campus.lostandfound.service.UserService;
+import com.campus.lostandfound.util.RedisUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,36 +23,75 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
  * 用户服务实现类
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     
+    // 缓存键前缀
+    private static final String USER_INFO_CACHE_KEY = "user:info:";
+    
+    // 缓存过期时间（1小时）
+    private static final long USER_INFO_CACHE_HOURS = 1;
+    
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final RedisUtil redisUtil;
+    private final ObjectMapper objectMapper;
+    private final CacheService cacheService;
     
     /**
      * 获取用户信息
+     * 使用Redis缓存，过期时间1小时
      * 
      * @param userId 用户ID
      * @return 用户信息VO
      */
     @Override
     public UserVO getProfile(Long userId) {
+        String cacheKey = USER_INFO_CACHE_KEY + userId;
+        
+        // 1. 尝试从缓存获取
+        String cachedData = redisUtil.get(cacheKey);
+        if (cachedData != null) {
+            try {
+                UserVO cachedVO = objectMapper.readValue(cachedData, UserVO.class);
+                log.info("用户信息缓存命中: userId={}", userId);
+                return cachedVO;
+            } catch (JsonProcessingException e) {
+                log.warn("解析用户信息缓存失败: userId={}", userId, e);
+            }
+        }
+        
+        // 2. 缓存未命中，从数据库查询
         User user = userMapper.selectById(userId);
         if (user == null) {
             throw new NotFoundException("用户不存在");
         }
         
-        return convertToVO(user);
+        UserVO userVO = convertToVO(user);
+        
+        // 3. 存入缓存
+        try {
+            String jsonData = objectMapper.writeValueAsString(userVO);
+            redisUtil.set(cacheKey, jsonData, USER_INFO_CACHE_HOURS, TimeUnit.HOURS);
+            log.info("用户信息已缓存: userId={}", userId);
+        } catch (JsonProcessingException e) {
+            log.warn("缓存用户信息失败: userId={}", userId, e);
+        }
+        
+        return userVO;
     }
     
     /**
      * 更新用户信息
+     * 更新后清除缓存
      * 
      * @param userId 用户ID
      * @param dto 更新信息DTO
@@ -100,8 +144,20 @@ public class UserServiceImpl implements UserService {
         // 保存更新
         userMapper.updateById(user);
         
+        // 清除用户信息缓存
+        invalidateUserCache(userId);
+        
         // 返回更新后的用户信息
         return convertToVO(user);
+    }
+    
+    /**
+     * 清除用户信息缓存
+     * 使用CacheService统一管理缓存清除
+     */
+    private void invalidateUserCache(Long userId) {
+        // 使用CacheService清除用户信息缓存
+        cacheService.evictUserInfoCache(userId);
     }
     
     /**

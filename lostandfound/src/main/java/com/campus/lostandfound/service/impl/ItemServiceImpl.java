@@ -18,6 +18,7 @@ import com.campus.lostandfound.repository.ItemImageMapper;
 import com.campus.lostandfound.repository.ItemMapper;
 import com.campus.lostandfound.repository.ItemTagMapper;
 import com.campus.lostandfound.repository.UserMapper;
+import com.campus.lostandfound.service.CacheService;
 import com.campus.lostandfound.service.ImageRecognitionService;
 import com.campus.lostandfound.service.ItemService;
 import com.campus.lostandfound.service.LocationService;
@@ -25,6 +26,9 @@ import com.campus.lostandfound.service.MatchService;
 import com.campus.lostandfound.service.PointService;
 import com.campus.lostandfound.model.vo.GeoPoint;
 import com.campus.lostandfound.util.RedisUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -33,10 +37,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -47,6 +55,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ItemServiceImpl implements ItemService {
     
+    // 缓存键前缀
+    private static final String ITEM_DETAIL_CACHE_KEY = "item:detail:";
+    private static final String ITEM_SEARCH_CACHE_KEY = "item:search:";
+    
+    // 缓存过期时间
+    private static final long ITEM_DETAIL_CACHE_MINUTES = 30;
+    private static final long ITEM_SEARCH_CACHE_MINUTES = 5;
+    
     private final ItemMapper itemMapper;
     private final ItemImageMapper itemImageMapper;
     private final ItemTagMapper itemTagMapper;
@@ -56,6 +72,8 @@ public class ItemServiceImpl implements ItemService {
     private final MatchService matchService;
     private final LocationService locationService;
     private final RedisUtil redisUtil;
+    private final ObjectMapper objectMapper;
+    private final CacheService cacheService;
     
     /**
      * 发布失物/招领信息
@@ -109,6 +127,7 @@ public class ItemServiceImpl implements ItemService {
     
     /**
      * 更新物品信息
+     * 更新后清除相关缓存
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -172,12 +191,16 @@ public class ItemServiceImpl implements ItemService {
             asyncRecognizeImage(dto.getImages().get(0), id);
         }
         
-        // 7. 返回更新后的ItemVO
+        // 7. 清除物品详情缓存
+        invalidateItemCache(id);
+        
+        // 8. 返回更新后的ItemVO
         return convertToVO(item);
     }
     
     /**
      * 删除物品信息（软删除）
+     * 删除后清除相关缓存
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -201,40 +224,75 @@ public class ItemServiceImpl implements ItemService {
         item.setDeleted(1);
         itemMapper.updateById(item);
         log.info("物品信息软删除成功: itemId={}", id);
+        
+        // 4. 清除物品详情缓存
+        invalidateItemCache(id);
+    }
+    
+    /**
+     * 清除物品相关缓存
+     * 使用CacheService统一管理缓存清除
+     */
+    private void invalidateItemCache(Long itemId) {
+        // 使用CacheService清除物品相关的所有缓存
+        cacheService.evictItemRelatedCache(itemId);
     }
     
     /**
      * 获取物品详情
+     * 使用Redis缓存，过期时间30分钟
      */
     @Override
     public ItemDetailVO getDetail(Long id) {
         log.info("获取物品详情: itemId={}", id);
         
-        // 1. 查询物品信息（包含关联的图片和标签），不存在或已删除则抛出NotFoundException
+        String cacheKey = ITEM_DETAIL_CACHE_KEY + id;
+        
+        // 1. 尝试从缓存获取
+        String cachedData = redisUtil.get(cacheKey);
+        if (cachedData != null) {
+            try {
+                ItemDetailVO cachedVO = objectMapper.readValue(cachedData, ItemDetailVO.class);
+                log.info("物品详情缓存命中: itemId={}", id);
+                
+                // 增加浏览次数（即使缓存命中也要增加）
+                String viewKey = "item:view:" + id;
+                Long currentViewCount = redisUtil.increment(viewKey);
+                cachedVO.setViewCount(currentViewCount.intValue());
+                
+                // 异步更新数据库浏览次数
+                asyncUpdateViewCount(id, currentViewCount.intValue());
+                
+                return cachedVO;
+            } catch (JsonProcessingException e) {
+                log.warn("解析物品详情缓存失败: itemId={}", id, e);
+            }
+        }
+        
+        // 2. 缓存未命中，从数据库查询
         Item item = itemMapper.selectById(id);
         if (item == null || item.getDeleted() == 1) {
             log.warn("物品不存在或已删除: itemId={}", id);
             throw new NotFoundException("物品信息不存在");
         }
         
-        // 2. 使用Redis原子操作增加浏览次数: INCR item:view:{id}
+        // 3. 使用Redis原子操作增加浏览次数: INCR item:view:{id}
         String viewKey = "item:view:" + id;
         Long currentViewCount = redisUtil.increment(viewKey);
         log.info("物品 {} 浏览次数增加到: {}", id, currentViewCount);
         
-        // 3. 定时任务批量同步浏览次数到数据库（或直接更新）
-        // 这里选择直接更新数据库，也可以通过定时任务批量同步
+        // 4. 更新数据库浏览次数
         item.setViewCount(currentViewCount.intValue());
         itemMapper.updateById(item);
         
-        // 4. 查询发布者信息
+        // 5. 查询发布者信息
         User user = userMapper.selectById(item.getUserId());
         
-        // 5. 调用MatchService获取匹配推荐列表（前10条）
+        // 6. 调用MatchService获取匹配推荐列表（前10条）
         Result<List<MatchVO>> matchResult = matchService.getRecommendations(id);
         List<MatchVO> matchRecommendations = matchResult.getData() != null ? matchResult.getData() : new ArrayList<>();
         
-        // 6. 组装ItemDetailVO返回
+        // 7. 组装ItemDetailVO返回
         ItemDetailVO detailVO = new ItemDetailVO();
         BeanUtils.copyProperties(item, detailVO);
         
@@ -264,8 +322,32 @@ public class ItemServiceImpl implements ItemService {
         // 设置匹配推荐列表
         detailVO.setMatchRecommendations(matchRecommendations);
         
+        // 8. 存入缓存
+        try {
+            String jsonData = objectMapper.writeValueAsString(detailVO);
+            redisUtil.set(cacheKey, jsonData, ITEM_DETAIL_CACHE_MINUTES, TimeUnit.MINUTES);
+            log.info("物品详情已缓存: itemId={}", id);
+        } catch (JsonProcessingException e) {
+            log.warn("缓存物品详情失败: itemId={}", id, e);
+        }
+        
         log.info("物品详情查询成功: itemId={}, 推荐数量={}", id, matchRecommendations.size());
         return detailVO;
+    }
+    
+    /**
+     * 异步更新数据库浏览次数
+     */
+    @Async
+    protected void asyncUpdateViewCount(Long itemId, Integer viewCount) {
+        try {
+            Item item = new Item();
+            item.setId(itemId);
+            item.setViewCount(viewCount);
+            itemMapper.updateById(item);
+        } catch (Exception e) {
+            log.error("异步更新浏览次数失败: itemId={}", itemId, e);
+        }
     }
     
     /**
@@ -427,6 +509,7 @@ public class ItemServiceImpl implements ItemService {
     /**
      * 搜索物品列表
      * 支持关键词搜索、多条件筛选、地理范围筛选和多种排序方式
+     * 使用Redis缓存，过期时间5分钟
      */
     @Override
     public PageResult<ItemVO> search(ItemSearchDTO dto) {
@@ -441,6 +524,83 @@ public class ItemServiceImpl implements ItemService {
         if (pageSize > 20) {
             pageSize = 20;
         }
+        
+        // 2. 生成缓存键
+        String cacheKey = generateSearchCacheKey(dto, pageNum, pageSize);
+        
+        // 3. 尝试从缓存获取
+        String cachedData = redisUtil.get(cacheKey);
+        if (cachedData != null) {
+            try {
+                PageResult<ItemVO> cachedResult = objectMapper.readValue(cachedData, 
+                        new TypeReference<PageResult<ItemVO>>() {});
+                log.info("搜索结果缓存命中: cacheKey={}", cacheKey);
+                return cachedResult;
+            } catch (JsonProcessingException e) {
+                log.warn("解析搜索结果缓存失败: cacheKey={}", cacheKey, e);
+            }
+        }
+        
+        // 4. 缓存未命中，执行搜索
+        PageResult<ItemVO> result = doSearch(dto, pageNum, pageSize);
+        
+        // 5. 存入缓存
+        try {
+            String jsonData = objectMapper.writeValueAsString(result);
+            redisUtil.set(cacheKey, jsonData, ITEM_SEARCH_CACHE_MINUTES, TimeUnit.MINUTES);
+            log.info("搜索结果已缓存: cacheKey={}", cacheKey);
+        } catch (JsonProcessingException e) {
+            log.warn("缓存搜索结果失败: cacheKey={}", cacheKey, e);
+        }
+        
+        return result;
+    }
+    
+    /**
+     * 生成搜索缓存键
+     * 使用MD5哈希搜索参数
+     */
+    private String generateSearchCacheKey(ItemSearchDTO dto, int pageNum, int pageSize) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(dto.getKeyword() != null ? dto.getKeyword() : "");
+        sb.append("|").append(dto.getType() != null ? dto.getType() : "");
+        sb.append("|").append(dto.getCategory() != null ? dto.getCategory() : "");
+        sb.append("|").append(dto.getStatus() != null ? dto.getStatus() : "");
+        sb.append("|").append(dto.getStartTime() != null ? dto.getStartTime().toString() : "");
+        sb.append("|").append(dto.getEndTime() != null ? dto.getEndTime().toString() : "");
+        sb.append("|").append(dto.getLongitude() != null ? dto.getLongitude() : "");
+        sb.append("|").append(dto.getLatitude() != null ? dto.getLatitude() : "");
+        sb.append("|").append(dto.getRadius() != null ? dto.getRadius() : "");
+        sb.append("|").append(dto.getSortBy() != null ? dto.getSortBy() : "");
+        sb.append("|").append(pageNum);
+        sb.append("|").append(pageSize);
+        
+        String hash = md5Hash(sb.toString());
+        return ITEM_SEARCH_CACHE_KEY + hash;
+    }
+    
+    /**
+     * 计算MD5哈希
+     */
+    private String md5Hash(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] digest = md.digest(input.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            // 如果MD5不可用，使用hashCode作为备选
+            return String.valueOf(input.hashCode());
+        }
+    }
+    
+    /**
+     * 执行实际的搜索操作
+     */
+    private PageResult<ItemVO> doSearch(ItemSearchDTO dto, int pageNum, int pageSize) {
         
         // 2. 如果有地理范围筛选，先获取范围内的物品ID
         Set<Long> geoFilteredIds = null;

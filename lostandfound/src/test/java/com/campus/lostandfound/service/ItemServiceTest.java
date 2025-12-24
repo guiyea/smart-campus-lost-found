@@ -15,6 +15,7 @@ import com.campus.lostandfound.repository.ItemTagMapper;
 import com.campus.lostandfound.repository.UserMapper;
 import com.campus.lostandfound.service.impl.ItemServiceImpl;
 import com.campus.lostandfound.util.RedisUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -60,7 +61,16 @@ class ItemServiceTest {
     private MatchService matchService;
     
     @Mock
+    private LocationService locationService;
+    
+    @Mock
     private RedisUtil redisUtil;
+    
+    @Mock
+    private ObjectMapper objectMapper;
+    
+    @Mock
+    private CacheService cacheService;
     
     @InjectMocks
     private ItemServiceImpl itemService;

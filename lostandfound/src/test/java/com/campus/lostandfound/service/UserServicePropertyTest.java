@@ -6,6 +6,8 @@ import com.campus.lostandfound.model.entity.User;
 import com.campus.lostandfound.model.vo.UserVO;
 import com.campus.lostandfound.repository.UserMapper;
 import com.campus.lostandfound.service.impl.UserServiceImpl;
+import com.campus.lostandfound.util.RedisUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.jqwik.api.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -49,8 +51,11 @@ class UserServicePropertyTest {
         // Setup mocks
         UserMapper userMapper = mock(UserMapper.class);
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        RedisUtil redisUtil = mock(RedisUtil.class);
+        ObjectMapper objectMapper = new ObjectMapper();
+        CacheService cacheService = mock(CacheService.class);
         
-        UserServiceImpl userService = new UserServiceImpl(userMapper, passwordEncoder);
+        UserServiceImpl userService = new UserServiceImpl(userMapper, passwordEncoder, redisUtil, objectMapper, cacheService);
         
         // Create User B in the database (the target user)
         User userB = new User();
@@ -103,8 +108,11 @@ class UserServicePropertyTest {
         // Setup mocks
         UserMapper userMapper = mock(UserMapper.class);
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        RedisUtil redisUtil = mock(RedisUtil.class);
+        ObjectMapper objectMapper = new ObjectMapper();
+        CacheService cacheService = mock(CacheService.class);
         
-        UserServiceImpl userService = new UserServiceImpl(userMapper, passwordEncoder);
+        UserServiceImpl userService = new UserServiceImpl(userMapper, passwordEncoder, redisUtil, objectMapper, cacheService);
         
         // Create the user in the database
         User user = new User();
@@ -160,8 +168,11 @@ class UserServicePropertyTest {
         // Setup mocks
         UserMapper userMapper = mock(UserMapper.class);
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        RedisUtil redisUtil = mock(RedisUtil.class);
+        ObjectMapper objectMapper = new ObjectMapper();
+        CacheService cacheService = mock(CacheService.class);
         
-        UserServiceImpl userService = new UserServiceImpl(userMapper, passwordEncoder);
+        UserServiceImpl userService = new UserServiceImpl(userMapper, passwordEncoder, redisUtil, objectMapper, cacheService);
         
         // Create both users in the database
         User userA = new User();
