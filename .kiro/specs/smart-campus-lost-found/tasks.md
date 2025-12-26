@@ -1191,7 +1191,7 @@
     - _Requirements: 10.3_
 
 - [ ] 31. API文档
-  - [ ] 31.1 配置Swagger/OpenAPI
+  - [x] 31.1 配置Swagger/OpenAPI
     - 添加springdoc-openapi-starter-webmvc-ui依赖
     - 创建`config/SwaggerConfig.java`:
       - 配置API信息: 标题、描述、版本
@@ -1199,7 +1199,7 @@
       - 配置分组: 用户端API、管理端API
     - _Requirements: 所有接口_
 
-  - [ ] 31.2 添加接口文档注解
+  - [x] 31.2 添加接口文档注解
     - 为所有Controller添加@Tag注解
     - 为所有接口方法添加@Operation注解: summary, description
     - 为所有参数添加@Parameter注解

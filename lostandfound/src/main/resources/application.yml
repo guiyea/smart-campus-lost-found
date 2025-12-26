@@ -110,3 +110,19 @@ logging:
 rate-limit:
   enabled: true
   whitelist-ips: 127.0.0.1,0:0:0:0:0:0:0:1
+
+# SpringDoc OpenAPI (Swagger) 配置
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    doc-expansion: none
+  group-configs:
+    - group: user-api
+      display-name: 用户端 API
+    - group: admin-api
+      display-name: 管理端 API
