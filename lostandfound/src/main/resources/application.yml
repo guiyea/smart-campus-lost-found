@@ -121,8 +121,3 @@ springdoc:
     operations-sorter: method
     tags-sorter: alpha
     doc-expansion: none
-  group-configs:
-    - group: user-api
-      display-name: 用户端 API
-    - group: admin-api
-      display-name: 管理端 API

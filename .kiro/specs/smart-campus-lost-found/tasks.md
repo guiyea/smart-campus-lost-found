@@ -1210,7 +1210,7 @@
 ## 第十三阶段：前端项目搭建
 
 - [ ] 32. Vue 3项目初始化
-  - [ ] 32.1 创建Vue项目
+  - [x] 32.1 创建Vue项目
     - 在项目根目录创建web/目录
     - 使用`npm create vite@latest web -- --template vue-ts`创建项目
     - 安装核心依赖:
@@ -1219,7 +1219,7 @@
     - 配置vite.config.ts: 代理API请求到后端、自动导入Element Plus组件
     - _Requirements: 所有前端需求_
 
-  - [ ] 32.2 配置项目结构
+  - [x] 32.2 配置项目结构
     - 创建目录结构:
       - src/api/: API请求模块
       - src/components/: 公共组件
@@ -1232,7 +1232,7 @@
     - 创建src/types/index.ts: 定义所有接口响应类型
     - _Requirements: 所有前端需求_
 
-  - [ ] 32.3 封装Axios请求
+  - [x] 32.3 封装Axios请求
     - 创建src/utils/request.ts:
       - 创建axios实例，配置baseURL
       - 请求拦截器: 自动添加Authorization头（从localStorage读取token）
@@ -1252,7 +1252,7 @@
     - _Requirements: 10.1_
 
 - [ ] 33. 路由和布局
-  - [ ] 33.1 配置Vue Router
+  - [x] 33.1 配置Vue Router
     - 创建src/router/index.ts:
       - 配置路由表:
         - /login: 登录页
@@ -1271,7 +1271,7 @@
         - 未登录跳转登录页
     - _Requirements: 1.2_
 
-  - [ ] 33.2 创建布局组件
+  - [x] 33.2 创建布局组件
     - 创建src/components/layout/MainLayout.vue:
       - 顶部导航栏: Logo、搜索框、导航菜单、用户信息/登录按钮
       - 主内容区域: <router-view>
@@ -1282,7 +1282,7 @@
       - 主内容区域
     - _Requirements: 所有前端需求_
 
-  - [ ] 33.3 配置Pinia状态管理
+  - [x] 33.3 配置Pinia状态管理
     - 创建src/stores/user.ts:
       - state: token, userInfo, isLoggedIn
       - actions: login, logout, refreshToken, fetchUserInfo

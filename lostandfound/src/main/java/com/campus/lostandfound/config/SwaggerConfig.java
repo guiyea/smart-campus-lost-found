@@ -60,21 +60,9 @@ public class SwaggerConfig {
                         "/api/v1/matches/**",
                         "/api/v1/messages/**",
                         "/api/v1/points/**",
-                        "/api/v1/files/**"
+                        "/api/v1/files/**",
+                        "/api/v1/admin/**"
                 )
-                .build();
-    }
-
-    /**
-     * 管理端 API 分组
-     * 包含统计、审核、用户管理等管理员专用接口
-     */
-    @Bean
-    public GroupedOpenApi adminApi() {
-        return GroupedOpenApi.builder()
-                .group("admin-api")
-                .displayName("管理端 API")
-                .pathsToMatch("/api/v1/admin/**")
                 .build();
     }
 }
