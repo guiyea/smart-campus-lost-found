@@ -85,6 +85,22 @@ public class AdminController {
     }
     
     /**
+     * 恢复已删除的物品
+     * 将物品的deleted状态从1改为0
+     * 
+     * @param id 物品ID
+     * @return 操作结果
+     */
+    @Operation(summary = "恢复已删除的物品", description = "恢复已删除的物品，将物品的deleted状态从1改为0", security = @SecurityRequirement(name = "bearerAuth"))
+    @PostMapping("/items/{id}/restore")
+    public Result<Void> restoreItem(
+            @Parameter(description = "物品ID", required = true, example = "1")
+            @PathVariable("id") Long id) {
+        adminService.restoreItem(id);
+        return Result.success();
+    }
+    
+    /**
      * 封禁用户
      * 更新用户状态为封禁，并向用户发送封禁通知消息
      * 

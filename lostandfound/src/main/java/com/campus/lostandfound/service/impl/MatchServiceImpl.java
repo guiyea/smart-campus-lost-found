@@ -303,15 +303,15 @@ public class MatchServiceImpl implements MatchService {
     @Async
     public void calculateMatchAsync(Item item) {
         log.info("异步执行匹配计算 - itemId: {}", item.getId());
-        
+
         try {
             List<MatchResult> matchResults = calculateMatch(item);
-            
+
             // 筛选匹配分数>=70的结果
             List<MatchResult> highScoreMatches = matchResults.stream()
                     .filter(result -> result.getScore().compareTo(new BigDecimal("70")) >= 0)
                     .collect(Collectors.toList());
-            
+
             if (!highScoreMatches.isEmpty()) {
                 log.info("发现高分匹配 {} 个，发送通知", highScoreMatches.size());
                 sendMatchNotifications(item, highScoreMatches);
@@ -320,7 +320,66 @@ public class MatchServiceImpl implements MatchService {
             log.error("异步匹配计算失败 - itemId: {}", item.getId(), e);
         }
     }
-    
+
+    @Override
+    public Result<List<MatchVO>> getUserMatchRecommendations(Long userId) {
+        log.info("获取用户匹配推荐 - userId: {}", userId);
+
+        // 查询用户所有待处理的物品
+        LambdaQueryWrapper<Item> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Item::getUserId, userId)
+                   .eq(Item::getStatus, 0)  // 待处理
+                   .eq(Item::getDeleted, 0); // 未删除
+
+        List<Item> userItems = itemMapper.selectList(queryWrapper);
+        log.info("用户待处理物品数量: {}", userItems.size());
+
+        if (userItems.isEmpty()) {
+            return Result.success(new ArrayList<>());
+        }
+
+        // 收集所有物品的匹配结果
+        List<MatchVO> allMatches = new ArrayList<>();
+
+        for (Item item : userItems) {
+            try {
+                // 计算该物品的匹配
+                List<MatchResult> matchResults = calculateMatch(item);
+
+                // 取前3个最佳匹配
+                List<MatchResult> topMatches = matchResults.stream()
+                        .limit(3)
+                        .collect(Collectors.toList());
+
+                // 转换为MatchVO
+                for (MatchResult matchResult : topMatches) {
+                    Item matchedItem = itemMapper.selectById(matchResult.getMatchedItemId());
+                    if (matchedItem != null && matchedItem.getDeleted() == 0) {
+                        MatchVO matchVO = new MatchVO();
+                        BeanUtils.copyProperties(convertToVO(matchedItem), matchVO);
+                        matchVO.setMatchScore(matchResult.getScore());
+                        matchVO.setCategoryScore(matchResult.getCategoryScore());
+                        matchVO.setTagScore(matchResult.getTagScore());
+                        matchVO.setTimeScore(matchResult.getTimeScore());
+                        matchVO.setLocationScore(matchResult.getLocationScore());
+                        allMatches.add(matchVO);
+                    }
+                }
+            } catch (Exception e) {
+                log.error("获取物品匹配失败 - itemId: {}", item.getId(), e);
+            }
+        }
+
+        // 按匹配分数降序排序，取前10条
+        List<MatchVO> topRecommendations = allMatches.stream()
+                .sorted((a, b) -> b.getMatchScore().compareTo(a.getMatchScore()))
+                .limit(10)
+                .collect(Collectors.toList());
+
+        log.info("返回用户匹配推荐数量: {}", topRecommendations.size());
+        return Result.success(topRecommendations);
+    }
+
     /**
      * 获取物品标签列表
      */

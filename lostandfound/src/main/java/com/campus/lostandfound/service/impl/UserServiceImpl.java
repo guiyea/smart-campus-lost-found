@@ -165,12 +165,13 @@ public class UserServiceImpl implements UserService {
      * 
      * @param studentId 学号（可选，支持模糊查询）
      * @param name 姓名（可选，支持模糊查询）
+     * @param status 状态（可选，0-正常，1-封禁）
      * @param pageNum 页码
      * @param pageSize 每页大小
      * @return 分页用户列表
      */
     @Override
-    public PageResult<UserVO> getUserList(String studentId, String name, Integer pageNum, Integer pageSize) {
+    public PageResult<UserVO> getUserList(String studentId, String name, Integer status, Integer pageNum, Integer pageSize) {
         // 构建查询条件
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         
@@ -182,6 +183,11 @@ public class UserServiceImpl implements UserService {
         // 姓名模糊查询
         if (StringUtils.hasText(name)) {
             queryWrapper.like(User::getName, name);
+        }
+        
+        // 状态筛选
+        if (status != null) {
+            queryWrapper.eq(User::getStatus, status);
         }
         
         // 按创建时间降序排序

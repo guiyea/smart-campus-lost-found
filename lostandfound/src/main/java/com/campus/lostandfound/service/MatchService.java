@@ -49,8 +49,17 @@ public interface MatchService {
     
     /**
      * 异步执行匹配计算（用于物品发布后的自动匹配）
-     * 
+     *
      * @param item 物品信息
      */
     void calculateMatchAsync(Item item);
+
+    /**
+     * 获取用户的匹配推荐列表
+     * 返回用户所有待处理物品的匹配推荐（最多10条）
+     *
+     * @param userId 用户ID
+     * @return 用户匹配推荐列表
+     */
+    Result<List<MatchVO>> getUserMatchRecommendations(Long userId);
 }

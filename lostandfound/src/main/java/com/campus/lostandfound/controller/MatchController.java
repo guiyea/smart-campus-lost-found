@@ -35,7 +35,7 @@ public class MatchController {
     /**
      * 获取匹配推荐列表
      * 返回与指定物品匹配度最高的前10条物品信息
-     * 
+     *
      * @param itemId 物品ID
      * @return 匹配推荐列表
      */
@@ -46,14 +46,33 @@ public class MatchController {
             @PathVariable Long itemId) {
         // 调用Service获取匹配推荐
         Result<List<MatchVO>> result = matchService.getRecommendations(itemId);
-        
+
         return result;
     }
-    
+
+    /**
+     * 获取用户的匹配推荐列表
+     * 返回用户所有待处理物品的匹配推荐（最多10条）
+     *
+     * @return 用户匹配推荐列表
+     */
+    @Operation(summary = "获取用户匹配推荐", description = "返回用户所有待处理物品的匹配推荐，按匹配度排序，最多10条", security = @SecurityRequirement(name = "bearerAuth"))
+    @GetMapping("/user-recommendations")
+    public Result<List<MatchVO>> getUserRecommendations() {
+        // 从SecurityContext获取当前用户ID
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Long userId = (Long) authentication.getPrincipal();
+
+        // 调用Service获取用户匹配推荐
+        Result<List<MatchVO>> result = matchService.getUserMatchRecommendations(userId);
+
+        return result;
+    }
+
     /**
      * 确认匹配
      * 用户确认两个物品匹配成功，更新双方状态为已找回
-     * 
+     *
      * @param dto 确认匹配DTO，包含物品ID和匹配物品ID
      * @return 操作结果
      */

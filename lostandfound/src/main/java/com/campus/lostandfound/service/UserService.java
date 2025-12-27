@@ -31,9 +31,10 @@ public interface UserService {
      * 
      * @param studentId 学号（可选，支持模糊查询）
      * @param name 姓名（可选，支持模糊查询）
+     * @param status 状态（可选，0-正常，1-封禁）
      * @param pageNum 页码
      * @param pageSize 每页大小
      * @return 分页用户列表
      */
-    PageResult<UserVO> getUserList(String studentId, String name, Integer pageNum, Integer pageSize);
+    PageResult<UserVO> getUserList(String studentId, String name, Integer status, Integer pageNum, Integer pageSize);
 }

@@ -346,6 +346,7 @@ public class AdminServiceImpl implements AdminService {
             vo.setEventTime(item.getEventTime());
             vo.setStatus(item.getStatus());
             vo.setViewCount(item.getViewCount());
+            vo.setDeleted(item.getDeleted());
             vo.setCreatedAt(item.getCreatedAt());
             vo.setUpdatedAt(item.getUpdatedAt());
             
@@ -445,6 +446,34 @@ public class AdminServiceImpl implements AdminService {
             case 2: return "警告";
             default: return "未知";
         }
+    }
+    
+    @Override
+    public void restoreItem(Long itemId) {
+        // 使用QueryWrapper绕过@TableLogic，以便查询已删除的物品
+        QueryWrapper<Item> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("id", itemId);
+        Item item = itemMapper.selectOne(queryWrapper);
+        
+        if (item == null) {
+            throw new NotFoundException("物品信息不存在");
+        }
+        
+        // 检查物品是否已被删除
+        if (item.getDeleted() == null || item.getDeleted() != 1) {
+            throw new BusinessException(400, "该物品未被删除，无需恢复");
+        }
+        
+        // 恢复物品：设置deleted=0
+        item.setDeleted(0);
+        item.setUpdatedAt(LocalDateTime.now());
+        
+        // 使用UpdateWrapper绕过@TableLogic
+        QueryWrapper<Item> updateWrapper = new QueryWrapper<>();
+        updateWrapper.eq("id", itemId);
+        itemMapper.update(item, updateWrapper);
+        
+        log.info("物品恢复 - 物品ID: {}, 标题: {}", itemId, item.getTitle());
     }
     
     @Override

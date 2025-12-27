@@ -1,6 +1,3 @@
-# Exclude web frontend directory
-web/
-
 # IDE files
 .vscode/
 .idea/

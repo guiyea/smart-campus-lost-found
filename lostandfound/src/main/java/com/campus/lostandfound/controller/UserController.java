@@ -64,15 +64,16 @@ public class UserController {
     
     /**
      * 分页查询用户列表（管理员功能）
-     * 支持按学号和姓名筛选
+     * 支持按学号、姓名和状态筛选
      * 
      * @param studentId 学号（可选，支持模糊查询）
      * @param name 姓名（可选，支持模糊查询）
+     * @param status 状态（可选，0-正常，1-封禁）
      * @param pageNum 页码，默认1
      * @param pageSize 每页大小，默认20
      * @return 分页用户列表
      */
-    @Operation(summary = "查询用户列表", description = "管理员功能：分页查询用户列表，支持按学号和姓名筛选", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "查询用户列表", description = "管理员功能：分页查询用户列表，支持按学号、姓名和状态筛选", security = @SecurityRequirement(name = "bearerAuth"))
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public Result<PageResult<UserVO>> getUserList(
@@ -80,12 +81,14 @@ public class UserController {
             @RequestParam(required = false) String studentId,
             @Parameter(description = "姓名（支持模糊查询）", example = "张三")
             @RequestParam(required = false) String name,
+            @Parameter(description = "状态：0-正常，1-封禁", example = "0")
+            @RequestParam(required = false) Integer status,
             @Parameter(description = "页码", example = "1")
             @RequestParam(defaultValue = "1") Integer pageNum,
             @Parameter(description = "每页大小", example = "20")
             @RequestParam(defaultValue = "20") Integer pageSize) {
         
-        PageResult<UserVO> pageResult = userService.getUserList(studentId, name, pageNum, pageSize);
+        PageResult<UserVO> pageResult = userService.getUserList(studentId, name, status, pageNum, pageSize);
         return Result.success(pageResult);
     }
 }

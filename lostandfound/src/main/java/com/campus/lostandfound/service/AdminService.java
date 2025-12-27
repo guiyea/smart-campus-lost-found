@@ -40,6 +40,14 @@ public interface AdminService {
     void reviewItem(Long itemId, Integer action, String reason);
     
     /**
+     * 恢复已删除的物品
+     * 将物品的deleted状态从1改为0
+     * 
+     * @param itemId 物品ID
+     */
+    void restoreItem(Long itemId);
+    
+    /**
      * 封禁用户
      * 更新用户状态为封禁，并向用户发送封禁通知消息
      * 

@@ -113,6 +113,12 @@ public class ItemVO {
     private Integer viewCount;
     
     /**
+     * 删除状态：0未删除 1已删除
+     */
+    @Schema(description = "删除状态：0-未删除, 1-已删除", example = "0", allowableValues = {"0", "1"}, accessMode = Schema.AccessMode.READ_ONLY)
+    private Integer deleted;
+    
+    /**
      * 距离（计算字段，单位：米）
      */
     @Schema(description = "距离（计算字段，单位：米）", example = "500.5", accessMode = Schema.AccessMode.READ_ONLY)

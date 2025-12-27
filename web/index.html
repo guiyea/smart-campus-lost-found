@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>智能校园失物招领平台</title>
+    <!-- 高德地图 JS API - 请在 .env 文件中配置 VITE_AMAP_KEY -->
+    <script type="text/javascript">
+      window._AMapSecurityConfig = {
+        securityJsCode: '', // 安全密钥，需要在高德开放平台申请
+      }
+    </script>
+    <!-- 注意：生产环境请替换为您的高德地图Key -->
+    <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=YOUR_AMAP_KEY&plugin=AMap.Geocoder,AMap.PlaceSearch,AMap.Geolocation"></script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -56,6 +56,12 @@ public class UserVO {
     private Integer role;
     
     /**
+     * 状态：0-正常，1-封禁
+     */
+    @Schema(description = "状态：0-正常，1-封禁", example = "0", allowableValues = {"0", "1"}, accessMode = Schema.AccessMode.READ_ONLY)
+    private Integer status;
+    
+    /**
      * 创建时间
      */
     @Schema(description = "创建时间", example = "2024-01-15 10:30:00", accessMode = Schema.AccessMode.READ_ONLY)
