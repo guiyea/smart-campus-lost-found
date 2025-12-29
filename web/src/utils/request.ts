@@ -55,15 +55,21 @@ instance.interceptors.response.use(
     if (error.response) {
       const { status, data } = error.response
       
-      // 401 错误 - 未认证，跳转登录页
+      // 401 错误 - 未认证，处理登录/注册与普通请求区分
       if (status === 401) {
-        ElMessage.error('登录已过期，请重新登录')
-        // 清除本地存储的认证信息
-        localStorage.removeItem('access_token')
-        localStorage.removeItem('refresh_token')
-        localStorage.removeItem('user_info')
-        // 跳转到登录页
-        window.location.href = '/login'
+        const requestUrl = error.config?.url || ''
+        const isAuthRequest = requestUrl.includes('/auth/login') || requestUrl.includes('/auth/register')
+        const message = data?.message || '登录已过期，请重新登录'
+        ElMessage.error(message)
+
+        if (!isAuthRequest) {
+          // 清除本地存储的认证信息
+          localStorage.removeItem('access_token')
+          localStorage.removeItem('refresh_token')
+          localStorage.removeItem('user_info')
+          // 跳转到登录页
+          window.location.href = '/login'
+        }
         return Promise.reject(error)
       }
       
@@ -166,12 +172,49 @@ const request = {
 
   /**
    * 下载文件
+   * 注意：由于响应拦截器会返回 response.data，对于 blob 类型响应，
+   * 拦截器返回的就是 Blob 对象本身
    */
-  download(url: string, config?: AxiosRequestConfig): Promise<Blob> {
-    return instance.get(url, {
+  async download(url: string, config?: AxiosRequestConfig): Promise<Blob> {
+    // 创建一个新的 axios 实例用于下载，避免响应拦截器的干扰
+    const downloadInstance = axios.create({
+      baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
+      timeout: 60000, // 下载超时时间设置更长
+    })
+    
+    // 添加认证头
+    const token = localStorage.getItem('access_token')
+    const headers: Record<string, string> = {}
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
+    
+    const response = await downloadInstance.get(url, {
       ...config,
       responseType: 'blob',
+      headers: {
+        ...headers,
+        ...config?.headers,
+      },
     })
+    
+    // 检查响应是否为错误（某些后端会返回 JSON 错误信息）
+    if (response.data instanceof Blob && response.data.type === 'application/json') {
+      // 尝试解析错误信息
+      const text = await response.data.text()
+      try {
+        const errorData = JSON.parse(text)
+        throw new Error(errorData.message || '下载失败')
+      } catch (e) {
+        if (e instanceof SyntaxError) {
+          // 不是 JSON，返回原始 blob
+          return response.data
+        }
+        throw e
+      }
+    }
+    
+    return response.data
   },
 }
 

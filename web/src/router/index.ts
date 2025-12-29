@@ -164,12 +164,13 @@ const router = createRouter({
 // Navigation guard for authentication
 router.beforeEach((to, _from, next) => {
   const authStore = useUserStore()
+  const isSignedIn = authStore.isLoggedIn && !authStore.isGuestMode
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
   const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin)
   const isGuest = to.matched.some(record => record.meta.guest)
 
   // Check if route requires authentication
-  if (requiresAuth && !authStore.isLoggedIn) {
+  if (requiresAuth && !isSignedIn) {
     next({
       name: 'Login',
       query: { redirect: to.fullPath },
@@ -178,14 +179,14 @@ router.beforeEach((to, _from, next) => {
   }
 
   // Check if route requires admin role
-  if (requiresAdmin && !authStore.isAdmin) {
+  if (requiresAdmin && (!isSignedIn || !authStore.isAdmin)) {
     // Redirect to home page if user is not admin
     next({ name: 'Home' })
     return
   }
 
   // Redirect logged-in users away from guest pages (login/register)
-  if (isGuest && authStore.isLoggedIn) {
+  if (isGuest && isSignedIn) {
     const redirect = to.query.redirect as string
     next(redirect || { name: 'Home' })
     return

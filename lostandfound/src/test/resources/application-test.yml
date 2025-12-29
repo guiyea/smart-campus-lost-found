@@ -1,0 +1,103 @@
+# 测试环境配置
+# 用于集成测试和端到端测试
+
+spring:
+  application:
+    name: lostandfound-test
+  
+  # 使用H2内存数据库进行测试
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+    
+  # H2控制台（调试用）
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+    
+  # Redis配置 - 测试环境使用嵌入式Redis或Mock
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: 
+      database: 15  # 使用独立的数据库编号避免影响开发数据
+      timeout: 5000ms
+  
+  # 文件上传配置
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
+      enabled: true
+
+  # SQL初始化
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+
+# 服务器配置
+server:
+  port: 0  # 随机端口
+
+# MyBatis-Plus配置
+mybatis-plus:
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: com.campus.lostandfound.model.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# JWT配置 - 测试环境
+jwt:
+  secret: test-secret-key-for-testing-only-at-least-256-bits-long-for-hs256-algorithm
+  access-token-expiration: 7200000
+  refresh-token-expiration: 604800000
+
+# 阿里云OSS配置 - 测试环境（Mock）
+aliyun:
+  oss:
+    endpoint: oss-cn-shanghai.aliyuncs.com
+    access-key-id: test-access-key-id
+    access-key-secret: test-access-key-secret
+    bucket-name: test-bucket
+    base-url: https://test-bucket.oss-cn-shanghai.aliyuncs.com
+  vision:
+    region-id: cn-shanghai
+    timeout: 5000
+
+# 高德地图配置 - 测试环境（Mock）
+amap:
+  key: test-amap-key
+  base-url: https://restapi.amap.com/v3
+  connect-timeout: 3000
+  read-timeout: 5000
+
+# 日志配置 - 测试环境
+logging:
+  level:
+    root: WARN
+    com.campus.lostandfound: DEBUG
+    org.springframework.security: DEBUG
+
+# 限流配置 - 测试环境禁用
+rate-limit:
+  enabled: false
+  whitelist-ips: 127.0.0.1
+
+# SpringDoc配置 - 测试环境禁用
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

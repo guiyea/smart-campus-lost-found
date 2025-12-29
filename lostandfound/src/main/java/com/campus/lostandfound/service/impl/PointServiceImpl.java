@@ -196,7 +196,9 @@ public class PointServiceImpl implements PointService {
                 .collect(Collectors.toList());
         
         // 批量查询用户信息
-        List<User> users = userMapper.selectBatchIds(userIds);
+        List<User> users = userIds.isEmpty()
+                ? new ArrayList<>()
+                : userMapper.selectList(new LambdaQueryWrapper<User>().in(User::getId, userIds));
         java.util.Map<Long, User> userMap = users.stream()
                 .collect(Collectors.toMap(User::getId, u -> u));
         

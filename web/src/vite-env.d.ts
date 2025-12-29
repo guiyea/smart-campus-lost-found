@@ -21,3 +21,4 @@ declare const AMap: {
   ToolBar: new (options?: any) => any
   plugin: (plugins: string | string[], callback: () => void) => void
 }
+

@@ -40,15 +40,12 @@
 
         <!-- 用户信息/登录按钮 -->
         <div class="user-section">
-          <template v-if="userStore.isLoggedIn">
-            <!-- 消息通知 -->
+          <template v-if="isSignedIn">
             <MessageBadge 
               ref="messageBadgeRef"
               :poll-interval="60000"
               @update:count="handleUnreadCountUpdate"
             />
-
-            <!-- 用户下拉菜单 -->
             <el-dropdown @command="handleUserCommand">
               <span class="user-info">
                 <el-avatar :src="userStore.userInfo?.avatar" :size="32">
@@ -66,6 +63,10 @@
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
+          </template>
+          <template v-else-if="userStore.isGuestMode">
+            <el-tag type="info" effect="plain">游客模式</el-tag>
+            <el-button type="primary" @click="$router.push('/login')">登录</el-button>
           </template>
           <template v-else>
             <el-button type="primary" @click="$router.push('/login')">登录</el-button>
@@ -111,6 +112,8 @@ const searchKeyword = ref('')
 
 // 未读消息数量（用于其他地方显示）
 const unreadCount = ref(0)
+
+const isSignedIn = computed(() => userStore.isLoggedIn && !userStore.isGuestMode)
 
 // 当前激活的菜单项
 const activeIndex = computed(() => route.path)
@@ -165,6 +168,12 @@ const handleLogout = async () => {
 }
 
 onMounted(() => {
+  // Ensure persisted login shows in UI after refresh
+  if (userStore.token && !userStore.userInfo) {
+    userStore.fetchUserInfo().catch(() => {
+      userStore.clearAuth()
+    })
+  }
   // MessageBadge 组件会自动获取未读消息数量
 })
 </script>

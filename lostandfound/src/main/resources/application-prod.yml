@@ -1,0 +1,129 @@
+# 生产环境配置
+# 此文件用于生产环境部署
+# 所有敏感信息应通过环境变量注入
+
+spring:
+  application:
+    name: lostandfound
+  
+  # 数据源配置 - 生产环境
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:campuslostandfound}?useUnicode=true&characterEncoding=UTF-8&useSSL=true&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=false&rewriteBatchedStatements=true&cachePrepStmts=true&useServerPrepStmts=true
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      minimum-idle: 10
+      maximum-pool-size: 50
+      auto-commit: true
+      idle-timeout: 600000
+      pool-name: CampusLostFoundHikariCP-Prod
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      connection-test-query: SELECT 1
+    
+  # Redis配置 - 生产环境
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+      database: ${REDIS_DATABASE:0}
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 4
+          max-wait: 3000ms
+  
+  # 文件上传配置
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
+      enabled: true
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+# 服务器配置 - 生产环境
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /
+  tomcat:
+    max-threads: 200
+    min-spare-threads: 20
+    accept-count: 100
+    max-connections: 10000
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+
+# MyBatis-Plus配置 - 生产环境
+mybatis-plus:
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: com.campus.lostandfound.model.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    # 生产环境关闭SQL日志
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# JWT配置 - 生产环境（必须通过环境变量设置强密钥）
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiration: 7200000  # 2小时
+  refresh-token-expiration: 604800000  # 7天
+
+# 阿里云OSS配置 - 生产环境
+aliyun:
+  oss:
+    endpoint: ${OSS_ENDPOINT}
+    access-key-id: ${ALIYUN_ACCESS_KEY_ID}
+    access-key-secret: ${ALIYUN_ACCESS_KEY_SECRET}
+    bucket-name: ${OSS_BUCKET_NAME}
+    base-url: ${OSS_BASE_URL}
+  # 阿里云视觉智能配置
+  vision:
+    region-id: ${ALIYUN_VISION_REGION_ID:cn-shanghai}
+    timeout: 5000
+
+# 高德地图配置 - 生产环境
+amap:
+  key: ${AMAP_KEY}
+  base-url: https://restapi.amap.com/v3
+  connect-timeout: 3000
+  read-timeout: 5000
+
+# 日志配置 - 生产环境
+logging:
+  level:
+    root: WARN
+    com.campus.lostandfound: INFO
+    org.springframework.security: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: ${LOG_PATH:/var/log/lostandfound}/application.log
+    max-size: 100MB
+    max-history: 30
+
+# 限流配置 - 生产环境
+rate-limit:
+  enabled: true
+  whitelist-ips: ${RATE_LIMIT_WHITELIST:}
+
+# SpringDoc OpenAPI (Swagger) 配置 - 生产环境禁用
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

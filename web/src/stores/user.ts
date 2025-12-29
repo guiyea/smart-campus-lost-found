@@ -3,29 +3,22 @@ import * as authApi from '@/api/auth'
 import * as userApi from '@/api/user'
 import type { UserVO, LoginDTO, RegisterDTO } from '@/types'
 
-/**
- * 用户状态管理 Store
- * 
- * 管理用户认证状态、令牌和用户信息
- * 
- * State:
- * - token: 访问令牌
- * - refreshToken: 刷新令牌
- * - userInfo: 用户信息
- * - isLoggedIn: 是否已登录（getter）
- * 
- * Actions:
- * - login: 用户登录
- * - logout: 用户退出
- * - refreshToken: 刷新令牌
- * - fetchUserInfo: 获取用户信息
- * 
- * _Requirements: 1.2, 6.3_
- */
+const createGuestUser = (): UserVO => ({
+  id: 0,
+  studentId: 'guest',
+  name: '游客',
+  phone: '',
+  avatar: '',
+  points: 0,
+  role: 0,
+  status: 0,
+  createdAt: new Date().toISOString(),
+})
+
 export const useUserStore = defineStore('user', {
   state: () => {
-    // 尝试从 localStorage 恢复用户信息
     const savedUserInfo = localStorage.getItem('user_info')
+    const guestMode = localStorage.getItem('guest_mode') === 'true'
     let userInfo: UserVO | null = null
     if (savedUserInfo) {
       try {
@@ -34,32 +27,27 @@ export const useUserStore = defineStore('user', {
         console.error('Failed to parse saved user info:', e)
       }
     }
-    
+    if (guestMode && !userInfo) {
+      userInfo = createGuestUser()
+    }
+
     return {
-      /** 用户信息 */
       userInfo,
-      /** 访问令牌 */
       token: localStorage.getItem('access_token') || '',
-      /** 刷新令牌 */
       refreshToken: localStorage.getItem('refresh_token') || '',
-      /** 加载状态 */
       loading: false,
+      isGuest: guestMode,
     }
   },
 
   getters: {
-    /** 是否已登录 */
-    isLoggedIn: (state) => !!state.token && !!state.userInfo,
-    /** 是否为管理员 */
+    isLoggedIn: (state) => (!!state.token && !!state.userInfo) || state.isGuest,
     isAdmin: (state) => state.userInfo?.role === 1,
-    /** 获取用户信息（兼容旧代码） */
     user: (state) => state.userInfo,
+    isGuestMode: (state) => state.isGuest,
   },
 
   actions: {
-    /**
-     * 用户登录
-     */
     async login(loginData: LoginDTO) {
       this.loading = true
       try {
@@ -68,6 +56,8 @@ export const useUserStore = defineStore('user', {
           const { accessToken, refreshToken, userInfo } = response.data
           this.setToken(accessToken, refreshToken)
           this.setUserInfo(userInfo)
+          this.isGuest = false
+          localStorage.removeItem('guest_mode')
         }
         return response
       } finally {
@@ -75,9 +65,6 @@ export const useUserStore = defineStore('user', {
       }
     },
 
-    /**
-     * 用户注册
-     */
     async register(registerData: RegisterDTO) {
       this.loading = true
       try {
@@ -88,9 +75,18 @@ export const useUserStore = defineStore('user', {
       }
     },
 
-    /**
-     * 用户退出登录
-     */
+    loginAsGuest() {
+      const guestUser = createGuestUser()
+      this.setUserInfo(guestUser)
+      this.token = ''
+      this.refreshToken = ''
+      this.isGuest = true
+      this.loading = false
+      localStorage.setItem('guest_mode', 'true')
+      localStorage.removeItem('access_token')
+      localStorage.removeItem('refresh_token')
+    },
+
     async logout() {
       try {
         if (this.token) {
@@ -103,10 +99,10 @@ export const useUserStore = defineStore('user', {
       }
     },
 
-    /**
-     * 刷新访问令牌
-     */
     async refreshAccessToken() {
+      if (this.isGuest) {
+        return null
+      }
       if (!this.refreshToken) {
         this.clearAuth()
         throw new Error('No refresh token available')
@@ -120,6 +116,8 @@ export const useUserStore = defineStore('user', {
           if (userInfo) {
             this.setUserInfo(userInfo)
           }
+          this.isGuest = false
+          localStorage.removeItem('guest_mode')
         }
         return response
       } catch (error) {
@@ -128,10 +126,10 @@ export const useUserStore = defineStore('user', {
       }
     },
 
-    /**
-     * 获取当前用户信息
-     */
     async fetchUserInfo() {
+      if (this.isGuest) {
+        return null
+      }
       if (!this.token) {
         throw new Error('No token available')
       }
@@ -141,6 +139,8 @@ export const useUserStore = defineStore('user', {
         const response = await userApi.getCurrentUser()
         if (response.data) {
           this.setUserInfo(response.data)
+          this.isGuest = false
+          localStorage.removeItem('guest_mode')
         }
         return response
       } catch (error) {
@@ -151,27 +151,15 @@ export const useUserStore = defineStore('user', {
       }
     },
 
-    /**
-     * 设置用户信息
-     */
-    setUserInfo(userInfo: UserVO) {
+    setUserInfo(userInfo: UserVO | null) {
       this.userInfo = userInfo
-      // 同时保存到 localStorage 以便页面刷新后恢复
       if (userInfo) {
         localStorage.setItem('user_info', JSON.stringify(userInfo))
+      } else {
+        localStorage.removeItem('user_info')
       }
     },
 
-    /**
-     * 设置用户信息（兼容旧代码）
-     */
-    setUser(user: UserVO) {
-      this.userInfo = user
-    },
-
-    /**
-     * 设置令牌
-     */
     setToken(token: string, refreshToken?: string) {
       this.token = token
       localStorage.setItem('access_token', token)
@@ -182,23 +170,25 @@ export const useUserStore = defineStore('user', {
       }
     },
 
-    /**
-     * 清除认证信息
-     */
     clearAuth() {
       this.userInfo = null
       this.token = ''
       this.refreshToken = ''
+      this.isGuest = false
       localStorage.removeItem('access_token')
       localStorage.removeItem('refresh_token')
       localStorage.removeItem('user_info')
+      localStorage.removeItem('guest_mode')
     },
 
-    /**
-     * 初始化用户状态
-     */
     async initializeAuth() {
-      // 如果已经有 userInfo，不需要重新获取
+      if (this.isGuest) {
+        if (!this.userInfo) {
+          this.setUserInfo(createGuestUser())
+        }
+        return
+      }
+
       if (this.token && this.userInfo) {
         return
       }
@@ -213,12 +203,10 @@ export const useUserStore = defineStore('user', {
       }
     },
 
-    /**
-     * 更新用户信息（部分更新）
-     */
     updateUserProfile(updates: Partial<UserVO>) {
       if (this.userInfo) {
         this.userInfo = { ...this.userInfo, ...updates }
+        localStorage.setItem('user_info', JSON.stringify(this.userInfo))
       }
     },
   },
