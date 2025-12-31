@@ -34,6 +34,7 @@
 ### 用户端功能
 
 - ✅ 用户注册/登录（学号/手机号）
+- ✅ 邮箱验证码注册/登录
 - ✅ 发布失物/招领信息
 - ✅ AI 自动识别物品类别
 - ✅ 多图上传（最多 9 张）
@@ -117,10 +118,23 @@
 - **JDK**: 21+
 - **Node.js**: 18+
 - **MySQL**: 8.0+
-- **Redis**: 7.x+
+- **Redis**: 7.x+ (推荐使用 Docker)
 - **Maven**: 3.8+ (或使用项目自带的 Maven Wrapper)
+- **Docker**: 可选，用于运行 Redis 等服务
 
 ### 一键启动（推荐）
+
+**前置准备 - 启动 Redis**：
+
+使用 Docker 启动 Redis（推荐）：
+```bash
+docker run -d --name redis-local -p 6379:6379 redis:latest
+```
+
+或使用 Windows Redis：
+```cmd
+redis-server.exe redis.windows.conf
+```
 
 **Windows 用户**：
 
@@ -129,11 +143,19 @@
 cd lostandfound\scripts
 init-database.bat
 
-# 2. 启动后端
+# 2. 配置环境变量（可选）
+# 编辑 application.yml 或设置环境变量：
+# - REDIS_HOST=localhost
+# - REDIS_PORT=6379
+# - MAIL_HOST=smtp.example.com
+# - MAIL_USERNAME=your-email@example.com
+# - MAIL_PASSWORD=your-password
+
+# 3. 启动后端
 cd ..
 mvnw.cmd spring-boot:run
 
-# 3. 启动前端（新窗口）
+# 4. 启动前端（新窗口）
 cd ..\web
 npm install
 npm run dev
@@ -142,6 +164,9 @@ npm run dev
 **Linux/Mac 用户**：
 
 ```bash
+# 0. 启动 Redis（使用 Docker）
+docker run -d --name redis-local -p 6379:6379 redis:latest
+
 # 1. 初始化数据库
 cd lostandfound
 mysql -u root -p < src/main/resources/schema.sql
@@ -312,6 +337,7 @@ docker-compose logs -f
 |------|------|--------|
 | 基础架构 | ✅ 完成 | 100% |
 | 用户认证 | ✅ 完成 | 100% |
+| 邮箱验证 | ✅ 完成 | 100% |
 | 文件上传 | ✅ 完成 | 100% |
 | 物品管理 | ✅ 完成 | 100% |
 | AI 识别 | ✅ 完成 | 100% |
@@ -321,6 +347,7 @@ docker-compose logs -f
 | 消息通知 | ✅ 完成 | 100% |
 | 积分系统 | ✅ 完成 | 100% |
 | 管理后台 | ✅ 完成 | 100% |
+| Redis 集成 | ✅ 完成 | 100% |
 | 系统优化 | ✅ 完成 | 100% |
 | 前端界面 | ✅ 完成 | 100% |
 | 部署配置 | ✅ 完成 | 100% |
@@ -335,11 +362,46 @@ docker-compose logs -f
 
 查看 [Windows 环境设置](lostandfound/docs/WINDOWS_SETUP.md)
 
+### Q: Redis 连接失败？
+
+**推荐方案 - 使用 Docker**：
+```bash
+docker run -d --name redis-local -p 6379:6379 redis:latest
+```
+
+**Windows 原生方案**：
+1. 使用项目根目录的 `redis.windows.conf` 配置文件
+2. 运行: `redis-server.exe redis.windows.conf`
+
+**验证连接**：
+```bash
+cd lostandfound
+.\mvnw.cmd exec:java -Dexec.mainClass=com.campus.lostandfound.SimpleRedisTest -Dexec.classpathScope=test
+```
+
 ### Q: 数据库连接失败？
 
 1. 确认 MySQL 服务已启动
 2. 检查配置文件中的数据库连接信息
 3. 确认数据库已创建
+
+### Q: 如何配置邮件服务？
+
+在 `application.yml` 或环境变量中配置：
+```yaml
+spring:
+  mail:
+    host: smtp.example.com
+    port: 587
+    username: your-email@example.com
+    password: your-password
+```
+
+支持的邮件服务商：
+- Gmail: smtp.gmail.com (需要开启应用专用密码)
+- QQ邮箱: smtp.qq.com (需要开启 SMTP 服务)
+- 163邮箱: smtp.163.com
+- Outlook: smtp-mail.outlook.com
 
 ### Q: 如何配置阿里云服务？
 

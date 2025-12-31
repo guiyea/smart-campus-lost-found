@@ -1,6 +1,7 @@
 # IDE files
 .vscode/
 .idea/
+.kiro/
 
 # OS files
 .DS_Store
@@ -8,3 +9,11 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Redis
+redis.windows.conf
+dump.rdb
+
+# Local environment files
+application-local.yml
+.env.local

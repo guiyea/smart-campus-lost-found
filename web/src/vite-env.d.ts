@@ -22,3 +22,6 @@ declare const AMap: {
   plugin: (plugins: string | string[], callback: () => void) => void
 }
 
+
+
+
